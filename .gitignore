@@ -1,0 +1,9 @@
+# fibrestats app code is developed locally and intentionally NOT published in this repo
+/fibrestats/
+
+# agent tooling (per Spec Kit installer security notice; restore with `specify init --here --integration kimi`)
+/.kimi-code/
+
+# misc
+.DS_Store
+.env*
