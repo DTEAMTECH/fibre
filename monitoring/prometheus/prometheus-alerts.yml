@@ -4,10 +4,6 @@ global:
 
 rule_files:
   - /etc/prometheus/fibre_alerts.yml
-  - /etc/prometheus/optional/rules/*.yml
-
-scrape_config_files:
-  - /etc/prometheus/optional/scrapes/*.yml
 
 alerting:
   alertmanagers:

@@ -4,11 +4,11 @@
 
 # Celestia Fibre Monitoring
 
-**Your Fibre server, traffic and storage in Grafana — with optional network exploration from your own FibreStats instance.**
+**Your Fibre server, traffic and storage in one local Grafana dashboard.**
 
 A self-hosted monitoring bundle by **DTEAMTECH**. Run it with Docker Compose, connect your existing Fibre service and explore its telemetry. Enable alerts when you want them; choose where notifications go.
 
-[Quick start](#quick-start) · [Dashboard](#dashboard) · [FibreStats integration](#optional-fibrestats-integration) · [Optional alerts](#optional-alerts) · [Configuration](#configuration) · [Troubleshooting](#troubleshooting)
+[Quick start](#quick-start) · [Dashboard](#dashboard) · [Optional alerts](#optional-alerts) · [Configuration](#configuration) · [Troubleshooting](#troubleshooting) · [Roadmap](#roadmap)
 
 ---
 
@@ -20,13 +20,11 @@ A self-hosted monitoring bundle by **DTEAMTECH**. Run it with Docker Compose, co
 | **Storage** | Occupancy versus budget, rejected uploads, backend errors and prune cycles |
 | **Signing** | Payment-promise signing attempts, duration and failures |
 | **Runtime** | Go memory and goroutines, alongside server telemetry presence |
-| **Network view, optional** | Provider reachability, TCP/TLS latency, recorded endorsements and network reconstruction from your own FibreStats observer |
-| **Exploration, optional** | Settlements, recorded paid bytes, unique blobs, namespaces, publishers and infrastructure changes inside Grafana |
 | **Optional alerts** | Budget pressure, request failures, signing/storage errors and missing telemetry |
 | **Local control** | Persistent storage, provisioned dashboards, pinned images and private service ports |
 
 > [!NOTE]
-> The quick start runs the local telemetry stack. Enable the [FibreStats integration](#optional-fibrestats-integration) to add measurements and chain records collected by an instance you operate. Place that observer on another machine/network for a useful outside view of your Fibre server.
+> **Current coverage: internal Fibre telemetry.** You need only this monitoring stack and your existing Fibre service. Outside-view reachability, endorsement history and network-wide blob activity need an external data source and are not connected in this bundle.
 
 ## Quick start
 
@@ -149,76 +147,9 @@ An idle network is healthy. Empty request panels before the first request are ex
 - **Latency percentiles:** server handler timing, not internet ping or end-to-end client latency.
 - **In-flight RPCs:** concurrent operations, not total network connections or configured connection capacity.
 
-Successful duplicate uploads count again in upload bytes. Download bytes are recorded before returning the response and do not prove full client receipt. Neither counter includes transport overhead or measures interface bandwidth. The optional FibreStats dashboard adds network settlement and blob accounting; host bandwidth needs host metrics.
+Successful duplicate uploads count again in upload bytes. Download bytes are recorded before returning the response and do not prove full client receipt. Neither counter includes transport overhead or measures interface bandwidth. Network-wide blob volume needs an external data source; host bandwidth needs host metrics.
 
 Storage occupancy includes limiter reservations. It is separate from physical disk usage. Signing latency measures Fibre payment-promise signing/waiting and has no universal 10 ms threshold. [Exact-tag instruments](https://github.com/celestiaorg/celestia-app/blob/v10.4.0/fibre/server_metrics.go), [upload byte accounting](https://github.com/celestiaorg/celestia-app/blob/v10.4.0/fibre/server_upload.go), [download byte accounting](https://github.com/celestiaorg/celestia-app/blob/v10.4.0/fibre/server_download.go).
-
-## Optional FibreStats integration
-
-Add the **Fibre Network — Explorer** dashboard alongside the operator dashboard. FibreStats runs the probes and blockchain reader; this stack reads its stored metrics and bounded JSON APIs. Grafana queries do not launch probes or paid uploads. The integration uses an instance you run, with no FibreStats account or token.
-
-| View | What it explains |
-|---|---|
-| Sources and coverage | Scrape health, collection freshness, indexed boundaries and incomplete history |
-| Providers | Registered endpoints, independent DNS/TCP/TLS/identity stages, latest measured latency and probe location |
-| Endorsements | Recorded signature inclusions, known historical membership denominator and unresolved attribution |
-| Network traffic | Settlements, recorded paid bytes and unique blobs over a fixed window |
-| Exploration tables | Recent settlements, namespace/publisher breakdowns and infrastructure changes |
-| Reconstruction | Network-level verified reconstruction outcomes and measurement coverage |
-
-### 1. Run your own FibreStats observer
-
-Deploy [FibreStats](https://github.com/zeroiwobro/fibrestats) on the monitoring/probe host using its [deployment guide](https://github.com/zeroiwobro/fibrestats/blob/main/docs/MONITORING-INTEGRATION.md). Its web service and collector need one shared **local persistent database**. Keep the collector running; the web service alone cannot refresh observations. Keep an existing database's `FIBRESTATS_VANTAGE` unchanged.
-
-For a fresh source checkout, configure `.env` in the FibreStats directory, then start its Compose stack:
-
-```dotenv
-FIBRESTATS_NETWORKS=Mainnet,Mocha
-FIBRESTATS_VANTAGE=probe-host-1
-```
-
-```bash
-docker compose up -d --build
-curl -fsS 'http://127.0.0.1:3000/api/integration/status?network=Mocha'
-```
-
-Configure chain/archive/index endpoints in FibreStats if needed. Historical endorsement attribution depends on historical membership and transaction availability; a working current endpoint does not guarantee complete history. Probe history starts when your observer runs.
-
-### 2. Connect the monitoring stack
-
-Run both Compose projects on the same monitoring/probe host. FibreStats creates the private `fibrestats_default` network. In **this repository's `monitoring/.env`**, add these settings alongside any existing password/notification configuration:
-
-```dotenv
-# FibreStats already uses host port 3000; Grafana gets its own port.
-GRAFANA_PORT=3002
-COMPOSE_FILE=compose.yaml:compose.fibrestats.yaml
-FIBRESTATS_DOCKER_NETWORK=fibrestats_default
-FIBRESTATS_API_URL=http://web:3000
-```
-
-From `fibre-monitoring/monitoring/`:
-
-```bash
-docker compose config --quiet
-docker compose up -d
-```
-
-Open **http://localhost:3002** and choose **Fibre Network — Explorer** in the **Fibre** folder. The first start installs the pinned Grafana Infinity plugin for JSON tables; it needs access to Grafana's plugin registry. The normal telemetry mode does not install this plugin. Prometheus reads `/api/metrics` once a minute; Grafana reads the JSON API through its backend.
-
-Both use FibreStats' **private `web:3000` service**. Its production Caddy deliberately returns 404 for `/api/metrics*` and `/api/integration*`. Do not set the API URL to the public website. If you use another private API address, update both `FIBRESTATS_API_URL` and [`monitoring/fibrestats/targets.yml`](monitoring/fibrestats/targets.yml); the target is `host:port`, without a scheme or path. Keep the API private and run any required tunnel independently.
-
-The integration targets FibreStats [contract v1 at `7ca781b`](https://github.com/zeroiwobro/fibrestats/commit/7ca781bfb4bc28e2f55f866084135fab3c668792). Fibre OTLP stays on the local/private collector path described in the quick start.
-
-### 3. Read the outside view correctly
-
-- Select **Network**, **Chain window**, **Provider** and **Probe location** in the dashboard. Activity windows are `24h`, `7d` and `30d`; changing Grafana's time picker changes metric history, not the JSON API's fixed window.
-- Check source freshness and coverage before interpreting totals. HTTP scrape success does not prove the collector or chain reader is healthy. Unknown data stays empty; a covered idle window can be zero.
-- TCP connection and TLS handshake durations are individual saved measurements, not ICMP ping or latency histograms. Stale probe verdicts are unavailable rather than successful.
-- Endorsement participation means recorded inclusions among settled promises with known historical membership. Clients can stop after quorum, so an absent endorsement is not proof of a missed duty or downtime. Unresolved memberships stay outside the provider denominator.
-- Recorded paid bytes, settlements and unique blobs measure different things. These are finite-window gauges: do not apply `rate()` to them. Chain windows end at the indexed boundary; probe windows use observation time.
-- Exploration tables show a bounded first page, with their row limits in the panel descriptions. Exact monetary values remain strings. Use FibreStats for deeper pagination and history; network reconstruction does not establish per-provider shard availability.
-
-Private OTLP server identity and public provider identity are separate selectors. Match your server explicitly to `(network, provider)` using the provider's canonical consensus-key-derived ID; hostnames and monikers do not establish that mapping.
 
 ## Optional alerts
 
@@ -227,14 +158,6 @@ The normal stack evaluates **no alert rules**. To enable the rule pack and local
 ```bash
 docker compose -f compose.yaml -f compose.alerts.yaml up -d
 ```
-
-For the FibreStats mode, change `COMPOSE_FILE` in `monitoring/.env` to include alerting, then use `docker compose up -d`:
-
-```dotenv
-COMPOSE_FILE=compose.yaml:compose.fibrestats.yaml:compose.alerts.yaml
-```
-
-Explicit `-f` flags override `COMPOSE_FILE`; include every enabled overlay when using them.
 
 Alerts are visible at http://localhost:9091/alerts and http://localhost:9093. **No notifications are sent until you configure a receiver.**
 
@@ -252,19 +175,6 @@ These thresholds are starting points. Adjust [`monitoring/prometheus/fibre_alert
 
 The current missing-telemetry rule is a whole-stack check. With several servers, it does not detect one disappearing while another keeps reporting; that requires an explicit expected-server inventory.
 
-With both FibreStats and alerts enabled, an additional pack checks API scrape failure and required source health. You can opt in to provider checks for fresh measured endpoint failure, unavailable current probe verdicts and TCP connection latency above **500 ms for 10 minutes**. Provider checks require successful scraping and fresh chain/observer/materializer sources. Tune [`monitoring/prometheus/fibrestats_alerts.yml`](monitoring/prometheus/fibrestats_alerts.yml) for your probe location. No endorsement-absence or idle-traffic alert is installed.
-
-To watch your own provider, uncomment `labels` in [`monitoring/fibrestats/targets.yml`](monitoring/fibrestats/targets.yml) and set its network and canonical provider ID from the dashboard:
-
-```yaml
-- targets: [web:3000]
-  labels:
-    alert_network: Mocha
-    alert_provider: "YOUR_LOWERCASE_40_CHARACTER_HEX_PROVIDER_ID"
-```
-
-Prometheus refreshes this target file automatically. All providers remain visible in Grafana; only the selected provider can produce endpoint/latency notifications. Without these labels, only collection/API checks from this pack run. These labels select alert scope; they do not map an OTLP hostname to a validator.
-
 ### Optional notifications
 
 Alertmanager supports Telegram, Discord, webhooks and other receivers. Keep credentials in a local file:
@@ -278,7 +188,7 @@ Edit that new file. For example, replace its receiver configuration with your Te
 ```yaml
 route:
   receiver: telegram
-  group_by: [alertname, service_instance_id, network, provider, vantage]
+  group_by: [alertname, service_instance_id]
   group_wait: 30s
   group_interval: 5m
   repeat_interval: 4h
@@ -307,7 +217,7 @@ docker run --rm --entrypoint amtool \
 docker compose -f compose.yaml -f compose.alerts.yaml up -d --force-recreate alertmanager
 ```
 
-Use the same enabled overlays whenever starting or updating this mode. For FibreStats, `docker compose exec ...` and `docker compose restart prometheus` use the `COMPOSE_FILE` settings above. In basic telemetry mode, validate and restart Prometheus after rule changes:
+Use the alerts-enabled Compose command whenever starting or updating this mode. Validate and restart Prometheus after rule changes:
 
 ```bash
 docker compose -f compose.yaml -f compose.alerts.yaml exec prometheus \
@@ -318,7 +228,7 @@ docker compose -f compose.yaml -f compose.alerts.yaml restart prometheus
 
 Notification delivery depends on your credentials and routing. Test it with controlled synthetic/devnet data; do not stop a live validator to test an alarm. See [Alertmanager receiver configuration](https://prometheus.io/docs/alerting/latest/configuration/) for other channels.
 
-To return to dashboards without alerts, first remove `compose.alerts.yaml` from `COMPOSE_FILE` if set, retaining the other overlays you use. Then run:
+To return to dashboards without alerts:
 
 ```bash
 docker compose up -d --remove-orphans
@@ -365,12 +275,7 @@ If Prometheus is in a different Compose project, connect the services through a 
 | A port is already allocated | Change that service's host port in `.env`; keep internal service ports unchanged. |
 | Budget graph is empty or unbounded | Confirm the exported budget; a zero/non-positive budget disables enforcement and should not be interpreted as exhaustion. |
 | Alerts fire but no messages arrive | The default receiver is local only. Check your receiver config, credentials, Alertmanager logs and silences. |
-| Network/endorsement panels are missing | Enable the FibreStats overlay and open **Fibre Network — Explorer**. Local server OTLP does not supply outside-view data. |
-| `fibrestats_default` network cannot be found | Start your FibreStats Compose project first; set `FIBRESTATS_DOCKER_NETWORK` if its network name differs. |
-| FibreStats scrape or JSON tables return 404 | Use the private web service address. The public Caddy site intentionally blocks these APIs. Keep the scrape target and JSON base URL on the same instance. |
-| JSON panels report a missing plugin | Check Grafana startup logs and access to the plugin registry; the optional mode installs pinned Infinity before provisioning. |
-| A network panel says no data or unknown | Check the enabled network, source health, record age and history coverage. An empty provider selector needs a collected provider inventory first. |
-| No endpoint alerts for a provider | Enable both overlays and configure `alert_network` and `alert_provider` in `fibrestats/targets.yml`. Check fresh observer/chain/materializer sources too. |
+| Public ping or endorsement panels are missing | Those data sources are not implemented yet; local server OTLP does not supply them. |
 
 <details>
 <summary><strong>Project files and validation commands</strong></summary>
@@ -380,7 +285,6 @@ If Prometheus is in a different Compose project, connect the services through a 
 |---|---|
 | `compose.yaml` | Core local stack |
 | `compose.alerts.yaml` | Optional alerting services/config |
-| `compose.fibrestats.yaml` | Optional private FibreStats scraping and Grafana exploration |
 | `otelcol/otelcol.yaml` | Receive OTLP, expose private Prometheus metrics, discard traces |
 | `dashboards/fibre-operator.json` | Grafana operator and traffic dashboard |
 | `grafana/provisioning/` | Automatic data source and dashboard setup |
@@ -388,11 +292,6 @@ If Prometheus is in a different Compose project, connect the services through a 
 | `prometheus/prometheus-alerts.yml` | Scrapes, rules and Alertmanager routing |
 | `prometheus/fibre_alerts.yml` | Tunable alert pack |
 | `prometheus/tests.yml` | Synthetic rule regression cases |
-| `prometheus/fibrestats_alerts.yml` | Optional source health and selected-provider alerts |
-| `prometheus/fibrestats_tests.yml` | Synthetic outside-view rule regression cases |
-| `fibrestats/targets.yml` | Private metrics target and opt-in provider alert identity |
-| `fibrestats/dashboards/fibre-explorer.json` | Provider, traffic, endorsement and JSON exploration dashboard |
-| `fibrestats/provisioning/` | Optional Infinity datasource and dashboard provisioning |
 | `alertmanager/alertmanager.yml` | Local-only receiver default |
 
 Paths in the table are relative to `monitoring/`. Run validation commands from that directory:
@@ -400,8 +299,6 @@ Paths in the table are relative to `monitoring/`. Run validation commands from t
 ```bash
 docker compose config --quiet
 docker compose -f compose.yaml -f compose.alerts.yaml config --quiet
-docker compose -f compose.yaml -f compose.fibrestats.yaml config --quiet
-docker compose -f compose.yaml -f compose.fibrestats.yaml -f compose.alerts.yaml config --quiet
 docker compose run --rm collector validate --config=/etc/otelcol-contrib/config.yaml
 
 docker run --rm --entrypoint promtool \
@@ -411,10 +308,6 @@ docker run --rm --entrypoint promtool \
 docker run --rm --entrypoint promtool \
   -v "$PWD/prometheus:/work:ro" -w /work \
   prom/prometheus:v3.5.4 test rules tests.yml
-
-docker run --rm --entrypoint promtool \
-  -v "$PWD/prometheus:/work:ro" -w /work \
-  prom/prometheus:v3.5.4 test rules fibrestats_tests.yml
 ```
 
 Configuration and synthetic pipeline checks have passed. Real Fibre devnet/load testing and notification delivery with operator credentials remain to be verified. The [official Fibre monitoring guide](https://docs.celestia.org/operate/consensus-validators/fibre/metrics/) provides additional protocol context.
@@ -425,7 +318,15 @@ Configuration and synthetic pipeline checks have passed. Real Fibre devnet/load 
 
 ## Roadmap
 
-Next additions focus on physical disk, I/O and interface throughput, explicit private-server/provider identity mappings, and deeper exploration pagination. Per-provider retained-shard verification requires separate evidence; network reconstruction alone does not establish that a particular server served its shard.
+Planned dashboard additions include outside-view observations and chain records from a shared read-only data source, alongside local server/host metrics. Operators should not need to deploy an explorer or blockchain reader:
+
+- **Reachability and latency:** probes on another host/network, with validator identity checks and explicit probe locations.
+- **Endorsement participation:** signature inclusion, historical validator sets, periods and sample counts.
+- **Network traffic:** settled blobs and bytes, blob sizes, namespaces and publishers.
+- **Explorer views:** settlements, payments, escrow activity and recent blob tables.
+- **Serving and host health:** verified retained-shard reads, physical disk, I/O and interface throughput.
+
+An absent settlement endorsement alone is not a failure: publishers can reach quorum without collecting every signature. The future dashboard will show participation separately from confirmed request or serving failures.
 
 ## Contributing
 

@@ -1,8 +1,0 @@
-# The private web service on the shared FibreStats Docker network.
-# Keep this and FIBRESTATS_API_URL pointed at the same operator-owned instance.
-- targets: [web:3000]
-  # Opt in to provider alerts for your own validator (one network/provider).
-  # Collection/API alerts work without these labels; all providers remain visible.
-  # labels:
-  #   alert_network: Mocha
-  #   alert_provider: "your-lowercase-40-character-hex-provider-id"

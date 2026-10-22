@@ -1,6 +1,6 @@
 # Fibre monitoring bundle
 
-The **[primary README and complete setup guide](../README.md)** covers installation, connecting Fibre, the optional self-hosted FibreStats exploration dashboard, alerts, notifications, configuration and troubleshooting.
+The **[primary README and complete setup guide](../README.md)** covers installation, connecting Fibre, dashboard panels, optional alerts, notifications, configuration and troubleshooting.
 
 Run the stack from this directory:
 

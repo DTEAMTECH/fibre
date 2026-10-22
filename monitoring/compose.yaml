@@ -38,8 +38,7 @@ services:
       GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/fibre-operator.json
     volumes:
       - grafana-data:/var/lib/grafana
-      - ./grafana/provisioning/datasources/prometheus.yml:/etc/grafana/provisioning/datasources/prometheus.yml:ro
-      - ./grafana/provisioning/dashboards/fibre.yml:/etc/grafana/provisioning/dashboards/fibre.yml:ro
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
       - ./dashboards:/var/lib/grafana/dashboards:ro
     ports:
       - "127.0.0.1:${GRAFANA_PORT:-3000}:3000"
