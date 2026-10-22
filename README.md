@@ -19,6 +19,12 @@ Every existing ecosystem tool measures Fibre validators *from the outside* (reac
 
 Screenshots and a public link will land here once the MVP is live.
 
+## Operator monitoring
+
+Standalone monitoring bundle for Fibre server operators — a Grafana dashboard, optional Prometheus alert rules, an OTel Collector config, and a step-by-step guide for plugging it into an existing Prometheus/Grafana stack (worked example: the [nodejumper monitoring-tool](https://github.com/nodejumper-org/monitoring-tool)). Metrics only, no keys, self-hosted.
+
+→ [`monitoring/README.md`](monitoring/README.md)
+
 ## How we build
 
 This project follows [Spec Kit](https://github.com/github/spec-kit) spec-driven development: specs before code, carried through plan → tasks → implementation. The project constitution lives in [`.specify/memory/constitution.md`](.specify/memory/constitution.md).

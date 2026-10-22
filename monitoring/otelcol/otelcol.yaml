@@ -1,0 +1,127 @@
+# OpenTelemetry Collector (contrib) config for a single-operator Fibre setup.
+#
+# What this does:
+#   1. Receives OTLP metrics (and traces) that the fibre server pushes when
+#      started with `--otel-endpoint http://<this-host>:4318` (or env
+#      FIBRE_OTEL_ENDPOINT). The fibre binary appends /v1/metrics and
+#      /v1/traces to that base URL, so the plain :4318 endpoint is correct.
+#   2. Exposes the metrics in Prometheus format on :8889 so your existing
+#      Prometheus can scrape them (the fibre server itself is push-only and
+#      has no Prometheus endpoint).
+#
+# Based on celestia-app v10.4.0 observability/docker/otel-collector/config.yml,
+# adapted for a standalone single-operator deployment (no Tempo dependency,
+# batch + resource hygiene added).
+#
+# Run, for example:
+#   docker run -d --name otelcol \
+#     -p 4318:4318 -p 4317:4317 -p 8889:8889 \
+#     -v /etc/fibre/otelcol.yaml:/etc/otelcol-contrib/config.yaml \
+#     otel/opentelemetry-collector-contrib:latest
+#
+# Prometheus scrape config (same job/port conventions as upstream):
+#   scrape_configs:
+#     - job_name: 'otel-collector'
+#       scrape_interval: 15s
+#       scrape_protocols:          # enable exemplar-capable OpenMetrics
+#         - OpenMetricsText1.0.0
+#         - OpenMetricsText0.0.1
+#         - PrometheusText0.0.4
+#       static_configs:
+#         - targets: ['<this-host>:8889']
+
+receivers:
+  otlp:
+    protocols:
+      # The fibre server speaks OTLP/HTTP protobuf (metrics + traces).
+      http:
+        endpoint: 0.0.0.0:4318
+      # gRPC is unused by the fibre binary but kept for other OTel SDKs that
+      # may point at the same collector.
+      grpc:
+        endpoint: 0.0.0.0:4317
+
+processors:
+  # Resource-attribute hygiene. The Prometheus exporter below converts every
+  # resource attribute into a metric label (resource_to_telemetry_conversion),
+  # so noisy attributes — typically k8s/cloud metadata injected via
+  # OTEL_RESOURCE_ATTRIBUTES or auto-detecting SDKs — would end up as labels
+  # on every series and explode cardinality. The fibre binary itself only
+  # sets service.name="fibre", service.version and service.instance.id
+  # (= hostname); those are kept. Extend the delete list to taste.
+  resource/hygiene:
+    attributes:
+      - key: k8s.pod.name
+        action: delete
+      - key: k8s.pod.uid
+        action: delete
+      - key: k8s.pod.ip
+        action: delete
+      - key: k8s.namespace.name
+        action: delete
+      - key: k8s.node.name
+        action: delete
+      - key: k8s.cluster.name
+        action: delete
+      - key: k8s.deployment.name
+        action: delete
+      - key: k8s.daemonset.name
+        action: delete
+      - key: k8s.statefulset.name
+        action: delete
+      - key: k8s.container.name
+        action: delete
+      - key: k8s.cronjob.name
+        action: delete
+      - key: k8s.job.name
+        action: delete
+      - key: container.id
+        action: delete
+      - key: container.image.name
+        action: delete
+
+  # Batch outgoing data: fewer, larger metric flushes to the exporter.
+  # Defaults are fine for a single server; timeout keeps worst-case added
+  # latency at 5s.
+  batch:
+    timeout: 5s
+    send_batch_size: 1024
+    send_batch_max_size: 2048
+
+exporters:
+  # Serves all received metrics on http://<this-host>:8889/metrics for
+  # Prometheus to scrape.
+  prometheus:
+    endpoint: 0.0.0.0:8889
+    # OpenMetrics exposition carries histogram exemplars, letting Grafana
+    # jump from a latency spike to the matching trace.
+    enable_open_metrics: true
+    # Convert OTLP resource attributes into Prometheus labels on every
+    # series. This is what puts service_name, service_version and
+    # service_instance_id (the fibre server hostname) onto the metrics —
+    # dashboards and alerts filter on service_instance_id.
+    resource_to_telemetry_conversion:
+      enabled: true
+
+  # The fibre server also pushes traces (10% parent-based sampling) to
+  # <endpoint>/v1/traces. Without a traces pipeline the collector would
+  # reject them and spam the server's logs, so drain them silently with the
+  # nop exporter. To actually collect traces, replace `nop` below with an
+  # OTLP exporter pointed at your Tempo/Jaeger, e.g.:
+  #   otlp/tempo:
+  #     endpoint: tempo:4317
+  #     tls:
+  #       insecure: true
+  # and put `otlp/tempo` in the traces pipeline exporters instead.
+  nop:
+
+service:
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      processors: [resource/hygiene, batch]
+      exporters: [prometheus]
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [nop]
