@@ -92,7 +92,7 @@ fibrestats/                    # pnpm workspace root (existing Next.js app, giti
 │       │   ├── status/        #   server status/version/classification writer (Postgres)
 │       │   └── fleetagg/      #   nightly cross-tenant percentile job with k≥5 suppression
 │       ├── manifests/         #   per-release metric manifests (v10.4.0.yaml, main-drift.yaml …)
-│       └── testdata/golden/   #   recorded OTLP ExportMetricsServiceRequest fixtures per release
+│       └── test/fixtures/golden/ #   recorded OTLP ExportMetricsServiceRequest fixtures per release
 │                              #   (FR-013 contract tests replay these via vitest)
 ├── package.json               # existing Next.js app package (workspace root)
 └── pnpm-workspace.yaml        # workspace: app + packages/* + services/* (one pnpm-lock.yaml)
