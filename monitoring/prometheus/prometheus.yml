@@ -2,6 +2,10 @@ global:
   scrape_interval: 15s
   evaluation_interval: 15s
 
+# Optional integrations mount scrape fragments here; the default stack has none.
+scrape_config_files:
+  - /etc/prometheus/optional/scrapes/*.yml
+
 scrape_configs:
   - job_name: fibre
     static_configs:

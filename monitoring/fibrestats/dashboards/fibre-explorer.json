@@ -1,0 +1,3725 @@
+{
+  "title": "Fibre Network — Explorer",
+  "uid": "fibre-explorer",
+  "description": "Operator-owned FibreStats contract v1 integration: public endpoint observations, indexed chain traffic, historical endorsement evidence and bounded exploration tables. Requires the optional FibreStats Prometheus scrape and Infinity 4.1.3 JSON datasource. Unknown, partial and stale states remain explicit. No external analytics feed or private OTLP instance mapping is inferred. Verified against FibreStats 7ca781bfb4bc28e2f55f866084135fab3c668792.",
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "links": [
+    {
+      "title": "Private server telemetry",
+      "type": "link",
+      "url": "/d/fibre-operator",
+      "targetBlank": false,
+      "includeVars": false,
+      "keepTime": true
+    }
+  ],
+  "panels": [
+    {
+      "id": 1,
+      "title": "Fibre across your infrastructure",
+      "type": "text",
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "description": "",
+      "options": {
+        "mode": "markdown",
+        "content": "### Public observations and chain activity from your own FibreStats instance\n**Chain window** selects current 24h / 7d / 30d aggregates and tables; Grafana’s time picker controls stored metric history and visible chart points. Choose the provider and actual probe location above.\n\n**Unknown is not zero.** API reachability does not prove fresh collection. Readiness covers TCP, TLS and consensus-key identity. Endorsement inclusion is historical evidence, never a missed duty or downtime verdict. Private server mapping must be explicit."
+      }
+    },
+    {
+      "id": 2,
+      "title": "01  ·  Source health and coverage",
+      "type": "row",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 6
+      },
+      "description": "",
+      "collapsed": false
+    },
+    {
+      "id": 3,
+      "title": "API scrape",
+      "type": "stat",
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 0,
+        "y": 7
+      },
+      "description": "Prometheus scrape reachability only. This is independent of collection health and source freshness.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Unknown",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#F58A3C"
+          },
+          "decimals": 0,
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "Scrape failed",
+                  "color": "red",
+                  "index": 0
+                },
+                "1": {
+                  "text": "Reachable",
+                  "color": "green",
+                  "index": 1
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "expr": "max(up{job=\"fibrestats\"})",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Chain age",
+      "type": "stat",
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 4,
+        "y": 7
+      },
+      "description": "Age of the chain source block timestamp, not the receipt timestamp of a repeated HTTP response.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "noValue": "Unknown",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#F58A3C"
+          },
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "expr": "max(time() - fibrestats_source_record_timestamp_seconds{network=\"$network\",source=\"chain\"})",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Index age",
+      "type": "stat",
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 8,
+        "y": 7
+      },
+      "description": "Age of the index source block boundary. It can differ from the chain tip. Unknown means no safe block-time boundary is available.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "noValue": "Unknown",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#F58A3C"
+          },
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "expr": "max(time() - fibrestats_source_record_timestamp_seconds{network=\"$network\",source=\"index\"})",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Window · $window",
+      "type": "stat",
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 12,
+        "y": 7
+      },
+      "description": "Whether the selected fixed chain window has complete indexed coverage. Partial nonzero totals are lower bounds; absent values are unknown.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Unknown",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#F58A3C"
+          },
+          "decimals": 0,
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "Incomplete",
+                  "color": "orange",
+                  "index": 0
+                },
+                "1": {
+                  "text": "Complete",
+                  "color": "green",
+                  "index": 1
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "expr": "min(fibrestats_window_complete{network=\"$network\",window=\"$window\"})",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Registered",
+      "type": "stat",
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 16,
+        "y": 7
+      },
+      "description": "Registered Fibre endpoints in the stored chain snapshot. Source freshness is shown separately.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Unknown",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "expr": "sum(fibrestats_provider_inventory{network=\"$network\",state=\"registered\"})",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Fresh ready",
+      "type": "stat",
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 20,
+        "y": 7
+      },
+      "description": "Sum of fresh positive TCP/TLS/identity verdicts. Stale or unmeasured providers are excluded rather than counted as failed. Multiple independent vantages count separately.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Unknown",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "expr": "sum(fibrestats_probe_ready{network=\"$network\"})",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "Source state and real source times",
+      "type": "table",
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 12
+      },
+      "description": "Bounded source list, not a paginated history. Receipt time is independent of source block/measurement time. Chain/observer/materializer freshness is 180s; index/reconstruction/endorsement is 300s. Skipped optional enrichment does not prove a core failure. Sources can be stale while HTTP scrapes succeed.",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "fibrestats-json"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "type": "json",
+          "source": "url",
+          "url": "/api/integration/status",
+          "url_options": {
+            "method": "GET",
+            "params": [
+              {
+                "key": "network",
+                "value": "${network}"
+              },
+              {
+                "key": "window",
+                "value": "${window}"
+              }
+            ]
+          },
+          "parser": "jq-backend",
+          "root_selector": "(.rows[0].sources // {}) | to_entries[] | {source:.key,status:.value.status,record_time:.value.record_time,last_success_at:.value.last_success_at,last_attempt_at:.value.last_attempt_at,height:.value.height,reason:(.value.reason // .value.error)}",
+          "columns": [
+            {
+              "selector": "source",
+              "text": "Source",
+              "type": "string"
+            },
+            {
+              "selector": "status",
+              "text": "State",
+              "type": "string"
+            },
+            {
+              "selector": "record_time",
+              "text": "Source record time",
+              "type": "timestamp_epoch"
+            },
+            {
+              "selector": "last_success_at",
+              "text": "Last successful receipt",
+              "type": "timestamp_epoch"
+            },
+            {
+              "selector": "last_attempt_at",
+              "text": "Last attempt",
+              "type": "timestamp_epoch"
+            },
+            {
+              "selector": "height",
+              "text": "Height",
+              "type": "number"
+            },
+            {
+              "selector": "reason",
+              "text": "Reason",
+              "type": "string"
+            }
+          ],
+          "format": "table",
+          "pagination_mode": "none",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "fibrestats-json"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "Unknown",
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false,
+            "filterable": true
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "State"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "successful": {
+                        "text": "Successful",
+                        "color": "green",
+                        "index": 0
+                      },
+                      "failed": {
+                        "text": "Failed",
+                        "color": "red",
+                        "index": 1
+                      },
+                      "blocked": {
+                        "text": "Blocked",
+                        "color": "orange",
+                        "index": 2
+                      },
+                      "not_attempted": {
+                        "text": "Not attempted",
+                        "color": "gray",
+                        "index": 3
+                      },
+                      "stale": {
+                        "text": "Stale",
+                        "color": "orange",
+                        "index": 4
+                      },
+                      "unknown": {
+                        "text": "Unknown",
+                        "color": "gray",
+                        "index": 5
+                      },
+                      "skipped": {
+                        "text": "Skipped",
+                        "color": "gray",
+                        "index": 6
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "enablePagination": true
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "indexByName": {
+              "Source": 0,
+              "State": 1,
+              "Source record time": 2,
+              "Last successful receipt": 3,
+              "Last attempt": 4,
+              "Height": 5,
+              "Reason": 6
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "title": "Chain and index progress",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 21
+      },
+      "description": "Stored chain and independently indexed-through heights. A stalled index must not appear as current settled traffic.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Unknown",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 2,
+            "pointSize": 4,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "fibrestats_source_height{network=\"$network\",source=~\"chain|index\"}",
+          "refId": "A",
+          "instant": false,
+          "range": true,
+          "legendFormat": "{{source}} height"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "title": "Age of source records",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 21
+      },
+      "description": "Age of the actual source record, not web response construction. Missing source times stay unknown. A negative age indicates clock skew.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "noValue": "Unknown",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 2,
+            "pointSize": 4,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "time() - fibrestats_source_record_timestamp_seconds{network=\"$network\",source=~\"chain|index|observer|retrieval\"}",
+          "refId": "A",
+          "instant": false,
+          "range": true,
+          "legendFormat": "{{source}} source age"
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "title": "Current chain boundary and observation window",
+      "type": "table",
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 28
+      },
+      "description": "One stored snapshot, not a history table. Chain windows end at the safe indexed block boundary; probe observation windows use wall-clock time. API computed_at is deliberately not used as source freshness.",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "fibrestats-json"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "type": "json",
+          "source": "url",
+          "url": "/api/integration/status",
+          "url_options": {
+            "method": "GET",
+            "params": [
+              {
+                "key": "network",
+                "value": "${network}"
+              },
+              {
+                "key": "window",
+                "value": "${window}"
+              }
+            ]
+          },
+          "parser": "jq-backend",
+          "root_selector": "[{materialized_at,record_height:.record_through.height,record_time:.record_through.block_time,requested_start:.coverage.requested_start,covered_start:.coverage.start,covered_end:.coverage.end,complete:.coverage.complete,stale,observation_start:.observation_window.start,observation_end:.observation_window.end}] | .[]",
+          "columns": [
+            {
+              "selector": "materialized_at",
+              "text": "Materialized",
+              "type": "timestamp"
+            },
+            {
+              "selector": "record_height",
+              "text": "Indexed-through height",
+              "type": "number"
+            },
+            {
+              "selector": "record_time",
+              "text": "Indexed-through block time",
+              "type": "timestamp"
+            },
+            {
+              "selector": "requested_start",
+              "text": "Requested start",
+              "type": "timestamp"
+            },
+            {
+              "selector": "covered_start",
+              "text": "Covered start",
+              "type": "timestamp"
+            },
+            {
+              "selector": "covered_end",
+              "text": "Chain window end",
+              "type": "timestamp"
+            },
+            {
+              "selector": "complete",
+              "text": "Coverage complete",
+              "type": "boolean"
+            },
+            {
+              "selector": "stale",
+              "text": "Stale",
+              "type": "boolean"
+            },
+            {
+              "selector": "observation_start",
+              "text": "Probe window start",
+              "type": "timestamp"
+            },
+            {
+              "selector": "observation_end",
+              "text": "Probe window end",
+              "type": "timestamp"
+            }
+          ],
+          "format": "table",
+          "pagination_mode": "none",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "fibrestats-json"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "Unknown",
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false,
+            "filterable": true
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "enablePagination": true
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "indexByName": {
+              "Materialized": 0,
+              "Indexed-through height": 1,
+              "Indexed-through block time": 2,
+              "Requested start": 3,
+              "Covered start": 4,
+              "Chain window end": 5,
+              "Coverage complete": 6,
+              "Stale": 7,
+              "Probe window start": 8,
+              "Probe window end": 9
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "title": "02  ·  Provider reachability and latency",
+      "type": "row",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 33
+      },
+      "description": "",
+      "collapsed": false
+    },
+    {
+      "id": 14,
+      "title": "Selected provider · fresh verdict",
+      "type": "stat",
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 0,
+        "y": 34
+      },
+      "description": "Fresh current endpoint check and chain identity are available. Zero means stale, unregistered, not attempted or vantage mismatch; it is not measured downtime.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Unknown",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#F58A3C"
+          },
+          "decimals": 0,
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "Unavailable / stale",
+                  "color": "orange",
+                  "index": 0
+                },
+                "1": {
+                  "text": "Fresh verdict",
+                  "color": "green",
+                  "index": 1
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "expr": "min(fibrestats_probe_current_available{network=\"$network\",provider=\"$provider\",vantage=\"$vantage\"})",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "title": "Selected provider · readiness",
+      "type": "stat",
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 6,
+        "y": 34
+      },
+      "description": "Fresh measured TCP/TLS/consensus-key identity readiness from the selected vantage. Missing data stays unknown; TCP readiness is not verified shard serving.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Unknown",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#F58A3C"
+          },
+          "decimals": 0,
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "Measured failure",
+                  "color": "red",
+                  "index": 0
+                },
+                "1": {
+                  "text": "Ready",
+                  "color": "green",
+                  "index": 1
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "expr": "min(fibrestats_probe_ready{network=\"$network\",provider=\"$provider\",vantage=\"$vantage\"})",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "title": "Last real probe attempt age",
+      "type": "stat",
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 12,
+        "y": 34
+      },
+      "description": "Age of the actual latest current-endpoint check, preserved during an outage. Scraping the API never resets this timestamp.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "noValue": "Unknown",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#F58A3C"
+          },
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "expr": "max(time() - fibrestats_probe_last_attempt_timestamp_seconds{network=\"$network\",provider=\"$provider\",vantage=\"$vantage\"})",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "title": "Last real probe success age",
+      "type": "stat",
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 18,
+        "y": 34
+      },
+      "description": "Age of the last successful check of the current endpoint at this immutable vantage. Absent before the first success; stale timestamps are retained.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "noValue": "Unknown",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#F58A3C"
+          },
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "expr": "max(time() - fibrestats_probe_last_success_timestamp_seconds{network=\"$network\",provider=\"$provider\",vantage=\"$vantage\"})",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ]
+    },
+    {
+      "id": 18,
+      "title": "Latest measured TCP and TLS latency",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 39
+      },
+      "description": "Saved fresh stage measurements, in seconds. These are latest TCP/TLS stage durations, not ICMP ping, request percentiles, per-scrape observations or server RPC latency. Stale measurements disappear.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "noValue": "Unknown",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 2,
+            "pointSize": 4,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "fibrestats_probe_duration_seconds{network=\"$network\",provider=\"$provider\",vantage=\"$vantage\"}",
+          "refId": "A",
+          "instant": false,
+          "range": true,
+          "legendFormat": "{{stage}} · {{vantage}}"
+        }
+      ]
+    },
+    {
+      "id": 19,
+      "title": "Current stage evidence",
+      "type": "table",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 39
+      },
+      "description": "Bounded current DNS/TCP/TLS/identity stage states for the selected provider/vantage; not historical rows. A failed earlier stage leaves later stages not_attempted. A stale verdict does not become a measured failure.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "expr": "fibrestats_probe_stage_status{network=\"$network\",provider=\"$provider\",vantage=\"$vantage\"} == 1",
+          "refId": "A",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "Unknown",
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false,
+            "filterable": true
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "enablePagination": true
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "Value": true,
+              "job": true,
+              "instance": true,
+              "network": true,
+              "chain_id": true,
+              "provider": true,
+              "__name__": true
+            },
+            "indexByName": {
+              "stage": 0,
+              "status": 1,
+              "vantage": 2
+            },
+            "renameByName": {
+              "stage": "Stage",
+              "status": "State",
+              "vantage": "Probe location"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "title": "Retained checks by outcome · $window",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 47
+      },
+      "description": "Windowed retained check counts are gauges. They describe observed check outcomes, not counters or duty counts. No samples is unknown. The chain window above does not change this separate wall-clock probe window.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Unknown",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 2,
+            "pointSize": 4,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "fibrestats_probe_checks{network=\"$network\",provider=\"$provider\",vantage=\"$vantage\",window=\"$window\"}",
+          "refId": "A",
+          "instant": false,
+          "range": true,
+          "legendFormat": "{{result}}"
+        }
+      ]
+    },
+    {
+      "id": 21,
+      "title": "Selected provider identity",
+      "type": "table",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 47
+      },
+      "description": "Bounded current metadata for the selected provider from the stored chain snapshot. Freshness is shown above. Provider is the canonical lowercase consensus-key hash; moniker and endpoint can change. No hostname-to-private-telemetry mapping is inferred.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "targets": [
+        {
+          "expr": "fibrestats_provider_info{network=\"$network\",provider=\"$provider\"}",
+          "refId": "A",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "Unknown",
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false,
+            "filterable": true
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "enablePagination": true
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "Value": true,
+              "job": true,
+              "instance": true,
+              "__name__": true
+            },
+            "indexByName": {
+              "moniker": 0,
+              "host": 1,
+              "provider": 2,
+              "cons_address": 3,
+              "operator_address": 4,
+              "network": 5,
+              "chain_id": 6
+            },
+            "renameByName": {
+              "moniker": "Moniker",
+              "host": "Registered endpoint",
+              "provider": "Canonical provider",
+              "cons_address": "Consensus address",
+              "operator_address": "Operator address",
+              "network": "Network",
+              "chain_id": "Chain ID"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 22,
+      "title": "Network provider inventory · first 50",
+      "type": "table",
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 55
+      },
+      "description": "Bounded first page only; up to 50 records. No automatic cursor traversal. Stored rows remain readable when collection is stale. Data state is envelope freshness/coverage, not a service verdict; inspect source times above. Network-wide table; the selected provider/location filters apply to the charts above, not this inventory page.",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "fibrestats-json"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "type": "json",
+          "source": "url",
+          "url": "/api/integration/providers",
+          "url_options": {
+            "method": "GET",
+            "params": [
+              {
+                "key": "network",
+                "value": "${network}"
+              },
+              {
+                "key": "window",
+                "value": "${window}"
+              },
+              {
+                "key": "limit",
+                "value": "50"
+              }
+            ]
+          },
+          "parser": "jq-backend",
+          "root_selector": ". as $snapshot | .rows[] | {moniker,provider,host,registered,vantage,status:.probe.status,dns:.probe.stages.dns.status,tcp:.probe.stages.tcp.status,tls:.probe.stages.tls.status,identity:.probe.stages.identity.status,last_attempt_at:.probe.last_attempt_at,data_state:(if $snapshot.stale then \"STALE\" elif $snapshot.coverage.complete != true then \"PARTIAL\" else \"stored\" end)}",
+          "columns": [
+            {
+              "selector": "moniker",
+              "text": "Moniker",
+              "type": "string"
+            },
+            {
+              "selector": "provider",
+              "text": "Canonical provider",
+              "type": "string"
+            },
+            {
+              "selector": "host",
+              "text": "Endpoint",
+              "type": "string"
+            },
+            {
+              "selector": "registered",
+              "text": "Registered",
+              "type": "boolean"
+            },
+            {
+              "selector": "vantage",
+              "text": "Probe location",
+              "type": "string"
+            },
+            {
+              "selector": "status",
+              "text": "Probe state",
+              "type": "string"
+            },
+            {
+              "selector": "dns",
+              "text": "DNS",
+              "type": "string"
+            },
+            {
+              "selector": "tcp",
+              "text": "TCP",
+              "type": "string"
+            },
+            {
+              "selector": "tls",
+              "text": "TLS",
+              "type": "string"
+            },
+            {
+              "selector": "identity",
+              "text": "Identity",
+              "type": "string"
+            },
+            {
+              "selector": "last_attempt_at",
+              "text": "Real check time",
+              "type": "timestamp"
+            },
+            {
+              "selector": "data_state",
+              "text": "Data state",
+              "type": "string"
+            }
+          ],
+          "format": "table",
+          "pagination_mode": "none",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "fibrestats-json"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "Unknown",
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false,
+            "filterable": true
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Data state"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "stored": {
+                        "text": "Stored",
+                        "color": "blue",
+                        "index": 0
+                      },
+                      "PARTIAL": {
+                        "text": "Partial",
+                        "color": "orange",
+                        "index": 1
+                      },
+                      "STALE": {
+                        "text": "Stale",
+                        "color": "red",
+                        "index": 2
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Probe state"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "successful": {
+                        "text": "Successful",
+                        "color": "green",
+                        "index": 0
+                      },
+                      "failed": {
+                        "text": "Failed",
+                        "color": "red",
+                        "index": 1
+                      },
+                      "blocked": {
+                        "text": "Blocked",
+                        "color": "orange",
+                        "index": 2
+                      },
+                      "not_attempted": {
+                        "text": "Not attempted",
+                        "color": "gray",
+                        "index": 3
+                      },
+                      "stale": {
+                        "text": "Stale",
+                        "color": "orange",
+                        "index": 4
+                      },
+                      "unknown": {
+                        "text": "Unknown",
+                        "color": "gray",
+                        "index": 5
+                      },
+                      "skipped": {
+                        "text": "Skipped",
+                        "color": "gray",
+                        "index": 6
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "DNS"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "successful": {
+                        "text": "Successful",
+                        "color": "green",
+                        "index": 0
+                      },
+                      "failed": {
+                        "text": "Failed",
+                        "color": "red",
+                        "index": 1
+                      },
+                      "blocked": {
+                        "text": "Blocked",
+                        "color": "orange",
+                        "index": 2
+                      },
+                      "not_attempted": {
+                        "text": "Not attempted",
+                        "color": "gray",
+                        "index": 3
+                      },
+                      "stale": {
+                        "text": "Stale",
+                        "color": "orange",
+                        "index": 4
+                      },
+                      "unknown": {
+                        "text": "Unknown",
+                        "color": "gray",
+                        "index": 5
+                      },
+                      "skipped": {
+                        "text": "Skipped",
+                        "color": "gray",
+                        "index": 6
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "TCP"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "successful": {
+                        "text": "Successful",
+                        "color": "green",
+                        "index": 0
+                      },
+                      "failed": {
+                        "text": "Failed",
+                        "color": "red",
+                        "index": 1
+                      },
+                      "blocked": {
+                        "text": "Blocked",
+                        "color": "orange",
+                        "index": 2
+                      },
+                      "not_attempted": {
+                        "text": "Not attempted",
+                        "color": "gray",
+                        "index": 3
+                      },
+                      "stale": {
+                        "text": "Stale",
+                        "color": "orange",
+                        "index": 4
+                      },
+                      "unknown": {
+                        "text": "Unknown",
+                        "color": "gray",
+                        "index": 5
+                      },
+                      "skipped": {
+                        "text": "Skipped",
+                        "color": "gray",
+                        "index": 6
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "TLS"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "successful": {
+                        "text": "Successful",
+                        "color": "green",
+                        "index": 0
+                      },
+                      "failed": {
+                        "text": "Failed",
+                        "color": "red",
+                        "index": 1
+                      },
+                      "blocked": {
+                        "text": "Blocked",
+                        "color": "orange",
+                        "index": 2
+                      },
+                      "not_attempted": {
+                        "text": "Not attempted",
+                        "color": "gray",
+                        "index": 3
+                      },
+                      "stale": {
+                        "text": "Stale",
+                        "color": "orange",
+                        "index": 4
+                      },
+                      "unknown": {
+                        "text": "Unknown",
+                        "color": "gray",
+                        "index": 5
+                      },
+                      "skipped": {
+                        "text": "Skipped",
+                        "color": "gray",
+                        "index": 6
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Identity"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "successful": {
+                        "text": "Successful",
+                        "color": "green",
+                        "index": 0
+                      },
+                      "failed": {
+                        "text": "Failed",
+                        "color": "red",
+                        "index": 1
+                      },
+                      "blocked": {
+                        "text": "Blocked",
+                        "color": "orange",
+                        "index": 2
+                      },
+                      "not_attempted": {
+                        "text": "Not attempted",
+                        "color": "gray",
+                        "index": 3
+                      },
+                      "stale": {
+                        "text": "Stale",
+                        "color": "orange",
+                        "index": 4
+                      },
+                      "unknown": {
+                        "text": "Unknown",
+                        "color": "gray",
+                        "index": 5
+                      },
+                      "skipped": {
+                        "text": "Skipped",
+                        "color": "gray",
+                        "index": 6
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "enablePagination": true
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "indexByName": {
+              "Moniker": 0,
+              "Canonical provider": 1,
+              "Endpoint": 2,
+              "Registered": 3,
+              "Probe location": 4,
+              "Probe state": 5,
+              "DNS": 6,
+              "TCP": 7,
+              "TLS": 8,
+              "Identity": 9,
+              "Real check time": 10,
+              "Data state": 11
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 23,
+      "title": "03  ·  Settled network traffic",
+      "type": "row",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 65
+      },
+      "description": "",
+      "collapsed": false
+    },
+    {
+      "id": 24,
+      "title": "Settlements · $window",
+      "type": "stat",
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 0,
+        "y": 66
+      },
+      "description": "Recorded successful PayForFibre settlements in the fixed chain window. A repeated settlement is another settlement, not another unique blob. Partial counts are lower bounds.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Unknown",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#F58A3C"
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "expr": "sum(fibrestats_settlements{network=\"$network\",window=\"$window\"})",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ]
+    },
+    {
+      "id": 25,
+      "title": "Recorded paid blob bytes · $window",
+      "type": "stat",
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 6,
+        "y": 66
+      },
+      "description": "Recorded paid blob size summed per settlement, including repeated settlements. Not encoded shard traffic, unique blob bytes, NIC bandwidth or unpaid uploads. Prometheus precision is floating point; tables preserve decimal strings.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "noValue": "Unknown",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#F58A3C"
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "expr": "sum(fibrestats_paid_blob_bytes{network=\"$network\",window=\"$window\"})",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ]
+    },
+    {
+      "id": 26,
+      "title": "Unique blob identities · $window",
+      "type": "stat",
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 12,
+        "y": 66
+      },
+      "description": "Distinct chain-ID plus official version-byte/commitment blob identities. Omitted if any indexed settlement identity is unknown; complete covered idle traffic can be zero.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Unknown",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#F58A3C"
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "expr": "sum(fibrestats_unique_blobs{network=\"$network\",window=\"$window\"})",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ]
+    },
+    {
+      "id": 27,
+      "title": "Payment-promise timeouts · $window",
+      "type": "stat",
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 18,
+        "y": 66
+      },
+      "description": "Recorded timeout events in the fixed indexed chain window. No provider fault is implied. Partial counts are lower bounds; absent is unknown.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Unknown",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#F58A3C"
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "expr": "sum(fibrestats_payment_promise_timeouts{network=\"$network\",window=\"$window\"})",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ]
+    },
+    {
+      "id": 28,
+      "title": "Settlements by event-time bucket · $window",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 71
+      },
+      "description": "Bounded hourly/daily chain-event buckets (at most 31 points), not rate() of a saved aggregate. Fixed API window is selected above; the Grafana time picker can clip the visible points. Stale/partial source metadata is above; unknown buckets are not zero.",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "fibrestats-json"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Unknown",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 2,
+            "pointSize": 4,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "type": "json",
+          "source": "url",
+          "url": "/api/integration/series",
+          "url_options": {
+            "method": "GET",
+            "params": [
+              {
+                "key": "network",
+                "value": "${network}"
+              },
+              {
+                "key": "window",
+                "value": "${window}"
+              }
+            ]
+          },
+          "parser": "jq-backend",
+          "root_selector": ".rows[] | {time:.start,settlements}",
+          "columns": [
+            {
+              "selector": "time",
+              "text": "Time",
+              "type": "timestamp"
+            },
+            {
+              "selector": "settlements",
+              "text": "Settlements",
+              "type": "number"
+            }
+          ],
+          "format": "timeseries",
+          "pagination_mode": "none",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "fibrestats-json"
+          }
+        }
+      ]
+    },
+    {
+      "id": 29,
+      "title": "Recorded paid bytes by event-time bucket · $window",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 71
+      },
+      "description": "Bounded event-time series from the same stored chain boundary. Bytes repeat for repeated settlements and are approximate floating-point chart values; recent records and breakdown tables preserve exact decimal strings. Stale/partial source metadata is above; this is not wire throughput.",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "fibrestats-json"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "noValue": "Unknown",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 2,
+            "pointSize": 4,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "type": "json",
+          "source": "url",
+          "url": "/api/integration/series",
+          "url_options": {
+            "method": "GET",
+            "params": [
+              {
+                "key": "network",
+                "value": "${network}"
+              },
+              {
+                "key": "window",
+                "value": "${window}"
+              }
+            ]
+          },
+          "parser": "jq-backend",
+          "root_selector": ".rows[] | {time:.start,paid_blob_bytes:(if .paid_blob_bytes == null then null else (.paid_blob_bytes | tonumber) end)}",
+          "columns": [
+            {
+              "selector": "time",
+              "text": "Time",
+              "type": "timestamp"
+            },
+            {
+              "selector": "paid_blob_bytes",
+              "text": "Recorded paid blob bytes",
+              "type": "number"
+            }
+          ],
+          "format": "timeseries",
+          "pagination_mode": "none",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "fibrestats-json"
+          }
+        }
+      ]
+    },
+    {
+      "id": 30,
+      "title": "Recent settlements · first 50 in $window",
+      "type": "table",
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 79
+      },
+      "description": "Bounded first page only; up to 50 records. No automatic cursor traversal. Stored rows remain readable when collection is stale. Data state is envelope freshness/coverage, not a service verdict; inspect source times above. Rows are settlements, not all uploads or unique blobs. The payer is the escrow publisher in the signed promise; the submitter is the transaction message signer. Unknown historical charges are not inferred from current fee formulas.",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "fibrestats-json"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "type": "json",
+          "source": "url",
+          "url": "/api/integration/settlements",
+          "url_options": {
+            "method": "GET",
+            "params": [
+              {
+                "key": "network",
+                "value": "${network}"
+              },
+              {
+                "key": "window",
+                "value": "${window}"
+              },
+              {
+                "key": "limit",
+                "value": "50"
+              }
+            ]
+          },
+          "parser": "jq-backend",
+          "root_selector": ". as $snapshot | .rows[] | {time,height,hash,msg_index,namespace,blob_size,payer,submitter,endorsement_status:.endorsement.status,data_state:(if $snapshot.stale then \"STALE\" elif $snapshot.coverage.complete != true then \"PARTIAL\" else \"stored\" end)}",
+          "columns": [
+            {
+              "selector": "time",
+              "text": "Settled at",
+              "type": "timestamp"
+            },
+            {
+              "selector": "height",
+              "text": "Height",
+              "type": "number"
+            },
+            {
+              "selector": "hash",
+              "text": "Transaction",
+              "type": "string"
+            },
+            {
+              "selector": "msg_index",
+              "text": "Message index",
+              "type": "number"
+            },
+            {
+              "selector": "namespace",
+              "text": "Namespace",
+              "type": "string"
+            },
+            {
+              "selector": "blob_size",
+              "text": "Blob bytes (exact)",
+              "type": "string"
+            },
+            {
+              "selector": "payer",
+              "text": "Escrow payer",
+              "type": "string"
+            },
+            {
+              "selector": "submitter",
+              "text": "Transaction submitter",
+              "type": "string"
+            },
+            {
+              "selector": "endorsement_status",
+              "text": "Membership evidence",
+              "type": "string"
+            },
+            {
+              "selector": "data_state",
+              "text": "Data state",
+              "type": "string"
+            }
+          ],
+          "format": "table",
+          "pagination_mode": "none",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "fibrestats-json"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "Unknown",
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false,
+            "filterable": true
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Data state"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "stored": {
+                        "text": "Stored",
+                        "color": "blue",
+                        "index": 0
+                      },
+                      "PARTIAL": {
+                        "text": "Partial",
+                        "color": "orange",
+                        "index": 1
+                      },
+                      "STALE": {
+                        "text": "Stale",
+                        "color": "red",
+                        "index": 2
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "enablePagination": true
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "indexByName": {
+              "Settled at": 0,
+              "Height": 1,
+              "Transaction": 2,
+              "Message index": 3,
+              "Namespace": 4,
+              "Blob bytes (exact)": 5,
+              "Escrow payer": 6,
+              "Transaction submitter": 7,
+              "Membership evidence": 8,
+              "Data state": 9
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 31,
+      "title": "Top $group values · up to 20 plus remainder",
+      "type": "table",
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 89
+      },
+      "description": "Bounded top 20 values, with separate other-identified and unknown-role counts when supplied; no pagination. Select namespace, escrow payer or transaction submitter above. Retained rows can be stale or partial; inspect source freshness and coverage above. Exact byte strings are preserved. Missing remainder bytes are unknown, not zero.",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "fibrestats-json"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "type": "json",
+          "source": "url",
+          "url": "/api/integration/breakdowns",
+          "url_options": {
+            "method": "GET",
+            "params": [
+              {
+                "key": "network",
+                "value": "${network}"
+              },
+              {
+                "key": "window",
+                "value": "${window}"
+              },
+              {
+                "key": "group",
+                "value": "${group}"
+              },
+              {
+                "key": "limit",
+                "value": "20"
+              }
+            ]
+          },
+          "parser": "jq-backend",
+          "root_selector": ". as $snapshot | ((.rows[] | {value,settlements,paid_blob_bytes,unique_blobs,unknown_blob_bytes}), (if $snapshot.remainder != null then {value:\"Other identified values\",settlements:$snapshot.remainder.settlements,paid_blob_bytes:null,unique_blobs:null,unknown_blob_bytes:null} else empty end), (if $snapshot.unknown_role_settlements != null then {value:\"Unknown role\",settlements:$snapshot.unknown_role_settlements,paid_blob_bytes:null,unique_blobs:null,unknown_blob_bytes:null} else empty end)) | . + {data_state:(if $snapshot.stale then \"STALE\" elif $snapshot.coverage.complete != true then \"PARTIAL\" else \"stored\" end)}",
+          "columns": [
+            {
+              "selector": "value",
+              "text": "Value",
+              "type": "string"
+            },
+            {
+              "selector": "settlements",
+              "text": "Settlements",
+              "type": "number"
+            },
+            {
+              "selector": "paid_blob_bytes",
+              "text": "Recorded bytes (exact)",
+              "type": "string"
+            },
+            {
+              "selector": "unique_blobs",
+              "text": "Unique blobs",
+              "type": "number"
+            },
+            {
+              "selector": "unknown_blob_bytes",
+              "text": "Unknown-size settlements",
+              "type": "number"
+            },
+            {
+              "selector": "data_state",
+              "text": "Data state",
+              "type": "string"
+            }
+          ],
+          "format": "table",
+          "pagination_mode": "none",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "fibrestats-json"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "Unknown",
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false,
+            "filterable": true
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Data state"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "stored": {
+                        "text": "Stored",
+                        "color": "blue",
+                        "index": 0
+                      },
+                      "PARTIAL": {
+                        "text": "Partial",
+                        "color": "orange",
+                        "index": 1
+                      },
+                      "STALE": {
+                        "text": "Stale",
+                        "color": "red",
+                        "index": 2
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "enablePagination": true
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "indexByName": {
+              "Value": 0,
+              "Settlements": 1,
+              "Recorded bytes (exact)": 2,
+              "Unique blobs": 3,
+              "Unknown-size settlements": 4,
+              "Data state": 5
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 32,
+      "title": "04  ·  Historical endorsement inclusion",
+      "type": "row",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 98
+      },
+      "description": "",
+      "collapsed": false
+    },
+    {
+      "id": 33,
+      "title": "Read endorsement evidence correctly",
+      "type": "text",
+      "gridPos": {
+        "h": 3,
+        "w": 24,
+        "x": 0,
+        "y": 99
+      },
+      "description": "",
+      "options": {
+        "mode": "markdown",
+        "content": "**Recorded inclusion is not a service success rate.** The denominator contains settled promises with a **known historical validator set that includes the selected provider**. Unresolved memberships are excluded. Clients can stop collecting after quorum, so an absent signature proves neither a client attempt nor a missed duty. Keep sample counts, network unresolved records and completeness beside the ratio."
+      }
+    },
+    {
+      "id": 34,
+      "title": "Recorded inclusion share · $window",
+      "type": "stat",
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 0,
+        "y": 102
+      },
+      "description": "Recorded inclusions divided by observed settled promises with known historical membership for this provider. No denominator produces unknown. This is not availability, fault rate or a consensus block-signing metric.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "noValue": "Unknown",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#F58A3C"
+          },
+          "decimals": 1,
+          "min": 0,
+          "max": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "expr": "fibrestats_endorsement_inclusions{network=\"$network\",provider=\"$provider\",window=\"$window\"} / on(network,chain_id,provider,window) (fibrestats_endorsement_known_membership_settlements{network=\"$network\",provider=\"$provider\",window=\"$window\"} > 0)",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ]
+    },
+    {
+      "id": 35,
+      "title": "Known membership sample",
+      "type": "stat",
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 6,
+        "y": 102
+      },
+      "description": "Provider-specific historical-membership denominator. Unresolved historical sets are excluded; a zero sample yields no ratio.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Unknown",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#F58A3C"
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "expr": "sum(fibrestats_endorsement_known_membership_settlements{network=\"$network\",provider=\"$provider\",window=\"$window\"})",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ]
+    },
+    {
+      "id": 36,
+      "title": "Unresolved memberships · network",
+      "type": "stat",
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 12,
+        "y": 102
+      },
+      "description": "Network/window unresolved settlement memberships. No eligibility is assumed for any individual provider. Unknown is distinct from complete zero.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Unknown",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#F58A3C"
+          },
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "expr": "sum(fibrestats_endorsement_unresolved_settlements{network=\"$network\",window=\"$window\"})",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ]
+    },
+    {
+      "id": 37,
+      "title": "Endorsement evidence complete",
+      "type": "stat",
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 18,
+        "y": 102
+      },
+      "description": "Complete indexed history and no unresolved memberships for the fixed network window. A drained enrichment queue alone does not imply complete evidence.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Unknown",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#F58A3C"
+          },
+          "decimals": 0,
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "Incomplete",
+                  "color": "orange",
+                  "index": 0
+                },
+                "1": {
+                  "text": "Complete",
+                  "color": "green",
+                  "index": 1
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "textMode": "value",
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "expr": "min(fibrestats_endorsement_window_complete{network=\"$network\",window=\"$window\"})",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ]
+    },
+    {
+      "id": 38,
+      "title": "Inclusions and known membership sample · $window",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 107
+      },
+      "description": "Prometheus history of fixed-window gauges, not new-per-second ingestion. Backfill/enrichment may revise past event-time evidence. No rate() is applied.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Unknown",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 2,
+            "pointSize": 4,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "fibrestats_endorsement_inclusions{network=\"$network\",provider=\"$provider\",window=\"$window\"}",
+          "refId": "A",
+          "instant": false,
+          "range": true,
+          "legendFormat": "Recorded inclusions"
+        },
+        {
+          "expr": "fibrestats_endorsement_known_membership_settlements{network=\"$network\",provider=\"$provider\",window=\"$window\"}",
+          "refId": "B",
+          "instant": false,
+          "range": true,
+          "legendFormat": "Known historical memberships"
+        }
+      ]
+    },
+    {
+      "id": 39,
+      "title": "Evidence enrichment and series coverage",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 107
+      },
+      "description": "Current retained enrichment state and provider aggregates omitted by the bounded metric cap. At most 1,000 provider aggregates per network/window; JSON provider queries remain available. Resolved versus unresolved is separate from queue completion.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Unknown",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 2,
+            "pointSize": 4,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum by (status) (fibrestats_endorsement_enrichment_records{network=\"$network\"})",
+          "refId": "A",
+          "instant": false,
+          "range": true,
+          "legendFormat": "Enrichment · {{status}}"
+        },
+        {
+          "expr": "fibrestats_endorsement_provider_series_omitted{network=\"$network\",window=\"$window\"}",
+          "refId": "B",
+          "instant": false,
+          "range": true,
+          "legendFormat": "Provider aggregates omitted"
+        }
+      ]
+    },
+    {
+      "id": 40,
+      "title": "Selected provider endorsement history · first 50",
+      "type": "table",
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 115
+      },
+      "description": "Bounded first page only; up to 50 records. No automatic cursor traversal. Stored rows remain readable when collection is stale. Data state is envelope freshness/coverage, not a service verdict; inspect source times above. Provider filter applies here; network-wide unresolved memberships cannot be assigned to this provider. A false recorded inclusion does not establish downtime or an attempt. Historical rules are pinned by FibreStats to the supported Celestia release. Select a provider after the chain inventory arrives; this route requires a canonical provider ID.",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "fibrestats-json"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "type": "json",
+          "source": "url",
+          "url": "/api/integration/endorsements",
+          "url_options": {
+            "method": "GET",
+            "params": [
+              {
+                "key": "network",
+                "value": "${network}"
+              },
+              {
+                "key": "window",
+                "value": "${window}"
+              },
+              {
+                "key": "provider",
+                "value": "${provider}"
+              },
+              {
+                "key": "limit",
+                "value": "50"
+              }
+            ]
+          },
+          "parser": "jq-backend",
+          "root_selector": ". as $snapshot | .rows[] | {time,hash,msg_index,promise_height,recorded_inclusion,known_historical_member,status:.endorsement.status,data_state:(if $snapshot.stale then \"STALE\" elif $snapshot.coverage.complete != true then \"PARTIAL\" else \"stored\" end)}",
+          "columns": [
+            {
+              "selector": "time",
+              "text": "Settlement time",
+              "type": "timestamp"
+            },
+            {
+              "selector": "hash",
+              "text": "Transaction",
+              "type": "string"
+            },
+            {
+              "selector": "msg_index",
+              "text": "Message index",
+              "type": "number"
+            },
+            {
+              "selector": "promise_height",
+              "text": "Promise height",
+              "type": "string"
+            },
+            {
+              "selector": "recorded_inclusion",
+              "text": "Recorded inclusion",
+              "type": "boolean"
+            },
+            {
+              "selector": "known_historical_member",
+              "text": "Known historical member",
+              "type": "boolean"
+            },
+            {
+              "selector": "status",
+              "text": "Evidence state",
+              "type": "string"
+            },
+            {
+              "selector": "data_state",
+              "text": "Data state",
+              "type": "string"
+            }
+          ],
+          "format": "table",
+          "pagination_mode": "none",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "fibrestats-json"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "Unknown",
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false,
+            "filterable": true
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Data state"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "stored": {
+                        "text": "Stored",
+                        "color": "blue",
+                        "index": 0
+                      },
+                      "PARTIAL": {
+                        "text": "Partial",
+                        "color": "orange",
+                        "index": 1
+                      },
+                      "STALE": {
+                        "text": "Stale",
+                        "color": "red",
+                        "index": 2
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "enablePagination": true
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "indexByName": {
+              "Settlement time": 0,
+              "Transaction": 1,
+              "Message index": 2,
+              "Promise height": 3,
+              "Recorded inclusion": 4,
+              "Known historical member": 5,
+              "Evidence state": 6,
+              "Data state": 7
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 41,
+      "title": "05  ·  Network reconstruction and infrastructure changes",
+      "type": "row",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 125
+      },
+      "description": "",
+      "collapsed": false
+    },
+    {
+      "id": 42,
+      "title": "Observed network reconstruction outcomes · $window",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 126
+      },
+      "description": "Windowed retained network reconstruction results: successful, failed or unmeasured. Gauges, not counters. Selection is bounded and historical availability cannot be backfilled. This is not individual-provider shard-serving verification.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "Unknown",
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 2,
+            "pointSize": 4,
+            "showPoints": "never",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "expr": "fibrestats_network_reconstruction_checks{network=\"$network\",window=\"$window\"}",
+          "refId": "A",
+          "instant": false,
+          "range": true,
+          "legendFormat": "{{result}}"
+        }
+      ]
+    },
+    {
+      "id": 43,
+      "title": "Latest network reconstruction collection",
+      "type": "table",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 126
+      },
+      "description": "One bounded stored collection summary, not a provider table or complete network census. Source freshness is above; unavailable/unknown/zero selection must not become an availability percentage. Current-parameter selection and fallback evidence remain in FibreStats records.",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "fibrestats-json"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "type": "json",
+          "source": "url",
+          "url": "/api/integration/status",
+          "url_options": {
+            "method": "GET",
+            "params": [
+              {
+                "key": "network",
+                "value": "${network}"
+              },
+              {
+                "key": "window",
+                "value": "${window}"
+              }
+            ]
+          },
+          "parser": "jq-backend",
+          "root_selector": ". as $snapshot | .rows[0].reconstruction | {status,last_run,eligible_blobs,selected_settlements,measured,unmeasured,data_state:(if $snapshot.stale then \"STALE\" elif $snapshot.coverage.complete != true then \"PARTIAL\" else \"stored\" end)}",
+          "columns": [
+            {
+              "selector": "status",
+              "text": "State",
+              "type": "string"
+            },
+            {
+              "selector": "last_run",
+              "text": "Real collection time",
+              "type": "timestamp"
+            },
+            {
+              "selector": "eligible_blobs",
+              "text": "Eligible blobs",
+              "type": "number"
+            },
+            {
+              "selector": "selected_settlements",
+              "text": "Selected settlements",
+              "type": "number"
+            },
+            {
+              "selector": "measured",
+              "text": "Measured",
+              "type": "number"
+            },
+            {
+              "selector": "unmeasured",
+              "text": "Unmeasured",
+              "type": "number"
+            },
+            {
+              "selector": "data_state",
+              "text": "Data state",
+              "type": "string"
+            }
+          ],
+          "format": "table",
+          "pagination_mode": "none",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "fibrestats-json"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "Unknown",
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false,
+            "filterable": true
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Data state"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "stored": {
+                        "text": "Stored",
+                        "color": "blue",
+                        "index": 0
+                      },
+                      "PARTIAL": {
+                        "text": "Partial",
+                        "color": "orange",
+                        "index": 1
+                      },
+                      "STALE": {
+                        "text": "Stale",
+                        "color": "red",
+                        "index": 2
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "State"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "successful": {
+                        "text": "Successful",
+                        "color": "green",
+                        "index": 0
+                      },
+                      "failed": {
+                        "text": "Failed",
+                        "color": "red",
+                        "index": 1
+                      },
+                      "blocked": {
+                        "text": "Blocked",
+                        "color": "orange",
+                        "index": 2
+                      },
+                      "not_attempted": {
+                        "text": "Not attempted",
+                        "color": "gray",
+                        "index": 3
+                      },
+                      "stale": {
+                        "text": "Stale",
+                        "color": "orange",
+                        "index": 4
+                      },
+                      "unknown": {
+                        "text": "Unknown",
+                        "color": "gray",
+                        "index": 5
+                      },
+                      "skipped": {
+                        "text": "Skipped",
+                        "color": "gray",
+                        "index": 6
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "enablePagination": true
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "indexByName": {
+              "State": 0,
+              "Real collection time": 1,
+              "Eligible blobs": 2,
+              "Selected settlements": 3,
+              "Measured": 4,
+              "Unmeasured": 5,
+              "Data state": 6
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 44,
+      "title": "Recent infrastructure changes · first 50",
+      "type": "table",
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 134
+      },
+      "description": "Bounded first page only; up to 50 records. No automatic cursor traversal. Stored rows remain readable when collection is stale. Data state is envelope freshness/coverage, not a service verdict; inspect source times above. Network-wide observed registry/infrastructure changes. The selected provider and probe location do not filter this table. Changes are evidence of observed snapshots, not a complete historical audit.",
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "fibrestats-json"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "type": "json",
+          "source": "url",
+          "url": "/api/integration/changes",
+          "url_options": {
+            "method": "GET",
+            "params": [
+              {
+                "key": "network",
+                "value": "${network}"
+              },
+              {
+                "key": "window",
+                "value": "${window}"
+              },
+              {
+                "key": "limit",
+                "value": "50"
+              }
+            ]
+          },
+          "parser": "jq-backend",
+          "root_selector": ". as $snapshot | .rows[] | {time:.at,kind,provider,moniker,before:(.before | if . == null or type == \"string\" then . else tojson end),after:(.after | if . == null or type == \"string\" then . else tojson end),data_state:(if $snapshot.stale then \"STALE\" elif $snapshot.coverage.complete != true then \"PARTIAL\" else \"stored\" end)}",
+          "columns": [
+            {
+              "selector": "time",
+              "text": "Observed at",
+              "type": "timestamp"
+            },
+            {
+              "selector": "kind",
+              "text": "Change",
+              "type": "string"
+            },
+            {
+              "selector": "moniker",
+              "text": "Moniker",
+              "type": "string"
+            },
+            {
+              "selector": "provider",
+              "text": "Canonical provider",
+              "type": "string"
+            },
+            {
+              "selector": "before",
+              "text": "Before",
+              "type": "string"
+            },
+            {
+              "selector": "after",
+              "text": "After",
+              "type": "string"
+            },
+            {
+              "selector": "data_state",
+              "text": "Data state",
+              "type": "string"
+            }
+          ],
+          "format": "table",
+          "pagination_mode": "none",
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "fibrestats-json"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "noValue": "Unknown",
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false,
+            "filterable": true
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Data state"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "stored": {
+                        "text": "Stored",
+                        "color": "blue",
+                        "index": 0
+                      },
+                      "PARTIAL": {
+                        "text": "Partial",
+                        "color": "orange",
+                        "index": 1
+                      },
+                      "STALE": {
+                        "text": "Stale",
+                        "color": "red",
+                        "index": 2
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "enablePagination": true
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "indexByName": {
+              "Observed at": 0,
+              "Change": 1,
+              "Moniker": 2,
+              "Canonical provider": 3,
+              "Before": 4,
+              "After": 5,
+              "Data state": 6
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "refresh": "1m",
+  "schemaVersion": 39,
+  "tags": [
+    "fibre",
+    "celestia",
+    "fibrestats",
+    "network",
+    "explorer"
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "DS_PROMETHEUS",
+        "label": "Prometheus",
+        "type": "datasource",
+        "query": "prometheus",
+        "current": {
+          "text": "Prometheus",
+          "value": "prometheus"
+        },
+        "hide": 0,
+        "regex": "",
+        "options": []
+      },
+      {
+        "name": "network",
+        "label": "Network",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${DS_PROMETHEUS}"
+        },
+        "definition": "label_values(fibrestats_source_status, network)",
+        "query": {
+          "query": "label_values(fibrestats_source_status, network)",
+          "refId": "StandardVariableQuery"
+        },
+        "includeAll": false,
+        "multi": false,
+        "current": {},
+        "refresh": 2,
+        "sort": 1,
+        "hide": 0,
+        "regex": "",
+        "options": []
+      },
+      {
+        "name": "window",
+        "label": "Chain window",
+        "type": "custom",
+        "query": "24h,7d,30d",
+        "current": {
+          "text": "24h",
+          "value": "24h"
+        },
+        "includeAll": false,
+        "multi": false,
+        "hide": 0,
+        "options": [
+          {
+            "text": "24h",
+            "value": "24h",
+            "selected": true
+          },
+          {
+            "text": "7d",
+            "value": "7d",
+            "selected": false
+          },
+          {
+            "text": "30d",
+            "value": "30d",
+            "selected": false
+          }
+        ]
+      },
+      {
+        "name": "provider",
+        "label": "Provider",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${DS_PROMETHEUS}"
+        },
+        "definition": "label_values(fibrestats_provider_info{network=\"$network\"}, provider)",
+        "query": {
+          "query": "label_values(fibrestats_provider_info{network=\"$network\"}, provider)",
+          "refId": "StandardVariableQuery"
+        },
+        "includeAll": false,
+        "multi": false,
+        "current": {},
+        "refresh": 2,
+        "sort": 1,
+        "hide": 0,
+        "regex": "",
+        "options": []
+      },
+      {
+        "name": "vantage",
+        "label": "Probe location",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${DS_PROMETHEUS}"
+        },
+        "definition": "label_values(fibrestats_probe_current_available{network=\"$network\",provider=\"$provider\"}, vantage)",
+        "query": {
+          "query": "label_values(fibrestats_probe_current_available{network=\"$network\",provider=\"$provider\"}, vantage)",
+          "refId": "StandardVariableQuery"
+        },
+        "includeAll": false,
+        "multi": false,
+        "current": {},
+        "refresh": 2,
+        "sort": 1,
+        "hide": 0,
+        "regex": "",
+        "options": []
+      },
+      {
+        "name": "group",
+        "label": "Breakdown",
+        "type": "custom",
+        "query": "namespace,payer,submitter",
+        "current": {
+          "text": "namespace",
+          "value": "namespace"
+        },
+        "includeAll": false,
+        "multi": false,
+        "hide": 0,
+        "options": [
+          {
+            "text": "namespace",
+            "value": "namespace",
+            "selected": true
+          },
+          {
+            "text": "payer",
+            "value": "payer",
+            "selected": false
+          },
+          {
+            "text": "submitter",
+            "value": "submitter",
+            "selected": false
+          }
+        ]
+      }
+    ]
+  },
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "1m",
+      "5m",
+      "15m",
+      "1h"
+    ]
+  },
+  "timezone": "browser",
+  "version": 1
+}

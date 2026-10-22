@@ -1,0 +1,823 @@
+# Synthetic contract-v1 behavior: no chain access or public probes.
+# docker run --rm --entrypoint promtool -v "$PWD:/work:ro" -w /work \
+#   prom/prometheus:v3.5.4 test rules fibrestats_tests.yml
+rule_files:
+  - fibrestats_alerts.yml
+evaluation_interval: 1m
+tests:
+  - name: "healthy covered traffic and fresh probes stay quiet"
+    interval: 1m
+    input_series:
+      - series: "up{job=\"fibrestats\",instance=\"probe:3000\",alert_provider=\"1111111111111111111111111111111111111111\",alert_network=\"Mocha\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"chain\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"index\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"observer\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"materializer\"}"
+        values: "1+0x20"
+      - series: "fibrestats_provider_registered{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_current_available{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_ready{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_duration_seconds{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\",stage=\"tcp\"}"
+        values: "0.02+0x20"
+      - series: "fibrestats_settlements{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",window=\"24h\"}"
+        values: "20+0x20"
+      - series: "fibrestats_window_complete{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",window=\"24h\"}"
+        values: "1+0x20"
+    promql_expr_test:
+      - expr: "ALERTS{alertstate=\"firing\"}"
+        eval_time: 20m
+        exp_samples: []
+
+  - name: "complete covered idle traffic and zero known membership are not failures"
+    interval: 1m
+    input_series:
+      - series: "up{job=\"fibrestats\",instance=\"probe:3000\",alert_provider=\"1111111111111111111111111111111111111111\",alert_network=\"Mocha\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"chain\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"index\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"observer\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"materializer\"}"
+        values: "1+0x20"
+      - series: "fibrestats_provider_registered{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_current_available{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_ready{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_duration_seconds{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\",stage=\"tcp\"}"
+        values: "0.02+0x20"
+      - series: "fibrestats_settlements{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",window=\"24h\"}"
+        values: "0+0x20"
+      - series: "fibrestats_paid_blob_bytes{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",window=\"24h\"}"
+        values: "0+0x20"
+      - series: "fibrestats_window_complete{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",window=\"24h\"}"
+        values: "1+0x20"
+      - series: "fibrestats_endorsement_known_membership_settlements{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",window=\"24h\"}"
+        values: "0+0x20"
+      - series: "fibrestats_endorsement_inclusions{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",window=\"24h\"}"
+        values: "0+0x20"
+    promql_expr_test:
+      - expr: "ALERTS{alertstate=\"firing\"}"
+        eval_time: 20m
+        exp_samples: []
+
+  - name: "partial indexed history is not a provider failure"
+    interval: 1m
+    input_series:
+      - series: "up{job=\"fibrestats\",instance=\"probe:3000\",alert_provider=\"1111111111111111111111111111111111111111\",alert_network=\"Mocha\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"chain\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"index\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"observer\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"materializer\"}"
+        values: "1+0x20"
+      - series: "fibrestats_provider_registered{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_current_available{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_ready{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_duration_seconds{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\",stage=\"tcp\"}"
+        values: "0.02+0x20"
+      - series: "fibrestats_settlements{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",window=\"24h\"}"
+        values: "1+0x20"
+      - series: "fibrestats_window_complete{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",window=\"24h\"}"
+        values: "0+0x20"
+      - series: "fibrestats_endorsement_window_complete{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",window=\"24h\"}"
+        values: "0+0x20"
+    promql_expr_test:
+      - expr: "ALERTS{alertstate=\"firing\"}"
+        eval_time: 20m
+        exp_samples: []
+
+  - name: "unresolved memberships and zero recorded inclusions are not missed duties"
+    interval: 1m
+    input_series:
+      - series: "up{job=\"fibrestats\",instance=\"probe:3000\",alert_provider=\"1111111111111111111111111111111111111111\",alert_network=\"Mocha\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"chain\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"index\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"observer\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"materializer\"}"
+        values: "1+0x20"
+      - series: "fibrestats_provider_registered{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_current_available{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_ready{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_duration_seconds{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\",stage=\"tcp\"}"
+        values: "0.02+0x20"
+      - series: "fibrestats_settlements{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",window=\"24h\"}"
+        values: "20+0x20"
+      - series: "fibrestats_endorsement_unresolved_settlements{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",window=\"24h\"}"
+        values: "20+0x20"
+      - series: "fibrestats_endorsement_window_complete{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",window=\"24h\"}"
+        values: "0+0x20"
+      - series: "fibrestats_endorsement_known_membership_settlements{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",window=\"24h\"}"
+        values: "0+0x20"
+      - series: "fibrestats_endorsement_inclusions{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",window=\"24h\"}"
+        values: "0+0x20"
+    promql_expr_test:
+      - expr: "ALERTS{alertstate=\"firing\"}"
+        eval_time: 20m
+        exp_samples: []
+
+  - name: "fresh measured failed probes alert after five minutes"
+    interval: 1m
+    input_series:
+      - series: "up{job=\"fibrestats\",instance=\"probe:3000\",alert_provider=\"1111111111111111111111111111111111111111\",alert_network=\"Mocha\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"chain\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"index\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"observer\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"materializer\"}"
+        values: "1+0x20"
+      - series: "fibrestats_provider_registered{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_current_available{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_ready{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\"}"
+        values: "0+0x20"
+      - series: "fibrestats_probe_duration_seconds{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\",stage=\"tcp\"}"
+        values: "0.02+0x20"
+    promql_expr_test:
+      - expr: "ALERTS{alertstate=\"firing\"}"
+        eval_time: 4m
+        exp_samples: []
+      - expr: "count(ALERTS{alertname=\"FibreStatsProviderUnreachable\",alertstate=\"firing\"})"
+        eval_time: 5m
+        exp_samples:
+          - labels: "{}"
+            value: 1
+      - expr: "count(ALERTS{alertstate=\"firing\"})"
+        eval_time: 20m
+        exp_samples:
+          - labels: "{}"
+            value: 1
+  - name: "stale provider verdict is unknown rather than measured failure"
+    interval: 1m
+    input_series:
+      - series: "up{job=\"fibrestats\",instance=\"probe:3000\",alert_provider=\"1111111111111111111111111111111111111111\",alert_network=\"Mocha\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"chain\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"index\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"observer\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"materializer\"}"
+        values: "1+0x20"
+      - series: "fibrestats_provider_registered{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_current_available{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\"}"
+        values: "0+0x20"
+      - series: "fibrestats_probe_last_attempt_timestamp_seconds{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\"}"
+        values: "1+0x20"
+    promql_expr_test:
+      - expr: "ALERTS{alertstate=\"firing\"}"
+        eval_time: 4m
+        exp_samples: []
+      - expr: "count(ALERTS{alertname=\"FibreStatsProviderObservationUnavailable\",alertstate=\"firing\"})"
+        eval_time: 5m
+        exp_samples:
+          - labels: "{}"
+            value: 1
+      - expr: "count(ALERTS{alertstate=\"firing\"})"
+        eval_time: 20m
+        exp_samples:
+          - labels: "{}"
+            value: 1
+
+  - name: "stopped materializer suppresses retained failed and slow provider gauges"
+    interval: 1m
+    input_series:
+      - series: "up{job=\"fibrestats\",instance=\"probe:3000\",alert_provider=\"1111111111111111111111111111111111111111\",alert_network=\"Mocha\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"chain\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"index\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"observer\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"materializer\"}"
+        values: "0+0x20"
+      - series: "fibrestats_provider_registered{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_current_available{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_ready{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\"}"
+        values: "0+0x20"
+      - series: "fibrestats_probe_duration_seconds{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\",stage=\"tcp\"}"
+        values: "1+0x20"
+    promql_expr_test:
+      - expr: "count(ALERTS{alertname=\"FibreStatsSourceUnavailable\",alertstate=\"firing\"})"
+        eval_time: 5m
+        exp_samples:
+          - labels: "{}"
+            value: 1
+      - expr: "count(ALERTS{alertstate=\"firing\"})"
+        eval_time: 20m
+        exp_samples:
+          - labels: "{}"
+            value: 1
+
+  - name: "observer collection failure suppresses provider unknown verdict incidents"
+    interval: 1m
+    input_series:
+      - series: "up{job=\"fibrestats\",instance=\"probe:3000\",alert_provider=\"1111111111111111111111111111111111111111\",alert_network=\"Mocha\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"chain\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"index\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"observer\"}"
+        values: "0+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"materializer\"}"
+        values: "1+0x20"
+      - series: "fibrestats_provider_registered{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_current_available{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\"}"
+        values: "0+0x20"
+    promql_expr_test:
+      - expr: "count(ALERTS{alertname=\"FibreStatsSourceUnavailable\",alertstate=\"firing\"})"
+        eval_time: 5m
+        exp_samples:
+          - labels: "{}"
+            value: 1
+      - expr: "count(ALERTS{alertstate=\"firing\"})"
+        eval_time: 20m
+        exp_samples:
+          - labels: "{}"
+            value: 1
+
+  - name: "stale chain progress suppresses provider failure incidents"
+    interval: 1m
+    input_series:
+      - series: "up{job=\"fibrestats\",instance=\"probe:3000\",alert_provider=\"1111111111111111111111111111111111111111\",alert_network=\"Mocha\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"chain\"}"
+        values: "0+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"index\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"observer\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"materializer\"}"
+        values: "1+0x20"
+      - series: "fibrestats_provider_registered{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_current_available{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_ready{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\"}"
+        values: "0+0x20"
+      - series: "fibrestats_probe_duration_seconds{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\",stage=\"tcp\"}"
+        values: "0.02+0x20"
+    promql_expr_test:
+      - expr: "count(ALERTS{alertname=\"FibreStatsSourceUnavailable\",alertstate=\"firing\"})"
+        eval_time: 5m
+        exp_samples:
+          - labels: "{}"
+            value: 1
+      - expr: "count(ALERTS{alertstate=\"firing\"})"
+        eval_time: 20m
+        exp_samples:
+          - labels: "{}"
+            value: 1
+
+  - name: "failed scrape suppresses retained source and provider gauges"
+    interval: 1m
+    input_series:
+      - series: "up{job=\"fibrestats\",instance=\"probe:3000\",alert_provider=\"1111111111111111111111111111111111111111\",alert_network=\"Mocha\"}"
+        values: "0+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"chain\"}"
+        values: "0+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"index\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"observer\"}"
+        values: "0+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"materializer\"}"
+        values: "0+0x20"
+      - series: "fibrestats_provider_registered{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_current_available{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_ready{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\"}"
+        values: "0+0x20"
+      - series: "fibrestats_probe_duration_seconds{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\",stage=\"tcp\"}"
+        values: "1+0x20"
+    promql_expr_test:
+      - expr: "ALERTS{alertstate=\"firing\"}"
+        eval_time: 1m
+        exp_samples: []
+      - expr: "count(ALERTS{alertname=\"FibreStatsScrapeUnavailable\",alertstate=\"firing\"})"
+        eval_time: 2m
+        exp_samples:
+          - labels: "{}"
+            value: 1
+      - expr: "count(ALERTS{alertstate=\"firing\"})"
+        eval_time: 20m
+        exp_samples:
+          - labels: "{}"
+            value: 1
+
+  - name: "missing scrape health suppresses orphaned gauge samples"
+    interval: 1m
+    input_series:
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"chain\"}"
+        values: "0+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"index\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"observer\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"materializer\"}"
+        values: "1+0x20"
+      - series: "fibrestats_provider_registered{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_current_available{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_ready{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\"}"
+        values: "0+0x20"
+      - series: "fibrestats_probe_duration_seconds{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\",stage=\"tcp\"}"
+        values: "1+0x20"
+    promql_expr_test:
+      - expr: "ALERTS{alertstate=\"firing\"}"
+        eval_time: 20m
+        exp_samples: []
+
+  - name: "missing collection state is unknown and never synthesizes provider failure"
+    interval: 1m
+    input_series:
+      - series: "up{job=\"fibrestats\",instance=\"probe:3000\",alert_provider=\"1111111111111111111111111111111111111111\",alert_network=\"Mocha\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"chain\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"index\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"materializer\"}"
+        values: "1+0x20"
+      - series: "fibrestats_provider_registered{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_current_available{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_ready{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\"}"
+        values: "0+0x20"
+      - series: "fibrestats_probe_duration_seconds{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\",stage=\"tcp\"}"
+        values: "1+0x20"
+    promql_expr_test:
+      - expr: "ALERTS{alertstate=\"firing\"}"
+        eval_time: 20m
+        exp_samples: []
+
+  - name: "sustained successful TCP connection time above 500 ms alerts after ten minutes"
+    interval: 1m
+    input_series:
+      - series: "up{job=\"fibrestats\",instance=\"probe:3000\",alert_provider=\"1111111111111111111111111111111111111111\",alert_network=\"Mocha\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"chain\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"index\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"observer\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"materializer\"}"
+        values: "1+0x20"
+      - series: "fibrestats_provider_registered{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_current_available{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_ready{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_duration_seconds{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\",stage=\"tcp\"}"
+        values: "0.6+0x20"
+    promql_expr_test:
+      - expr: "ALERTS{alertstate=\"firing\"}"
+        eval_time: 9m
+        exp_samples: []
+      - expr: "count(ALERTS{alertname=\"FibreStatsTCPConnectionLatencyHigh\",alertstate=\"firing\"})"
+        eval_time: 10m
+        exp_samples:
+          - labels: "{}"
+            value: 1
+      - expr: "count(ALERTS{alertstate=\"firing\"})"
+        eval_time: 20m
+        exp_samples:
+          - labels: "{}"
+            value: 1
+
+  - name: "brief TCP latency spike stays quiet"
+    interval: 1m
+    input_series:
+      - series: "up{job=\"fibrestats\",instance=\"probe:3000\",alert_provider=\"1111111111111111111111111111111111111111\",alert_network=\"Mocha\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"chain\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"index\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"observer\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"materializer\"}"
+        values: "1+0x20"
+      - series: "fibrestats_provider_registered{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_current_available{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_ready{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_duration_seconds{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\",stage=\"tcp\"}"
+        values: "0.6+0x4 0.02+0x15"
+    promql_expr_test:
+      - expr: "ALERTS{alertstate=\"firing\"}"
+        eval_time: 20m
+        exp_samples: []
+
+  - name: "failed readiness is not also a successful connection latency alert"
+    interval: 1m
+    input_series:
+      - series: "up{job=\"fibrestats\",instance=\"probe:3000\",alert_provider=\"1111111111111111111111111111111111111111\",alert_network=\"Mocha\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"chain\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"index\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"observer\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"materializer\"}"
+        values: "1+0x20"
+      - series: "fibrestats_provider_registered{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_current_available{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_ready{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\"}"
+        values: "0+0x20"
+      - series: "fibrestats_probe_duration_seconds{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\",stage=\"tcp\"}"
+        values: "5+0x20"
+    promql_expr_test:
+      - expr: "count(ALERTS{alertname=\"FibreStatsProviderUnreachable\",alertstate=\"firing\"})"
+        eval_time: 20m
+        exp_samples:
+          - labels: "{}"
+            value: 1
+      - expr: "count(ALERTS{alertstate=\"firing\"})"
+        eval_time: 20m
+        exp_samples:
+          - labels: "{}"
+            value: 1
+
+  - name: "unregistered provider with no verdict stays quiet"
+    interval: 1m
+    input_series:
+      - series: "up{job=\"fibrestats\",instance=\"probe:3000\",alert_provider=\"1111111111111111111111111111111111111111\",alert_network=\"Mocha\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"chain\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"index\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"observer\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"materializer\"}"
+        values: "1+0x20"
+      - series: "fibrestats_provider_registered{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\"}"
+        values: "0+0x20"
+      - series: "fibrestats_probe_current_available{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\"}"
+        values: "0+0x20"
+    promql_expr_test:
+      - expr: "ALERTS{alertstate=\"firing\"}"
+        eval_time: 20m
+        exp_samples: []
+
+  - name: "optional geographic and reconstruction sources do not page"
+    interval: 1m
+    input_series:
+      - series: "up{job=\"fibrestats\",instance=\"probe:3000\",alert_provider=\"1111111111111111111111111111111111111111\",alert_network=\"Mocha\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"chain\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"index\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"observer\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"materializer\"}"
+        values: "1+0x20"
+      - series: "fibrestats_provider_registered{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_current_available{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_ready{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_duration_seconds{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\",stage=\"tcp\"}"
+        values: "0.02+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"geolocation\"}"
+        values: "0+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"retrieval\"}"
+        values: "0+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"endorsement\"}"
+        values: "0+0x20"
+    promql_expr_test:
+      - expr: "ALERTS{alertstate=\"firing\"}"
+        eval_time: 20m
+        exp_samples: []
+
+  - name: "disabled integration with no series stays quiet"
+    interval: 1m
+    input_series: []
+    promql_expr_test:
+      - expr: "ALERTS{alertstate=\"firing\"}"
+        eval_time: 20m
+        exp_samples: []
+
+  - name: "source gates retain network and chain identity"
+    interval: 1m
+    input_series:
+      - series: "up{job=\"fibrestats\",instance=\"probe:3000\",alert_provider=\"1111111111111111111111111111111111111111\",alert_network=\"Mainnet\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"chain\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"index\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"observer\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"materializer\"}"
+        values: "1+0x20"
+      - series: "fibrestats_provider_registered{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_current_available{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_ready{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_duration_seconds{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\",stage=\"tcp\"}"
+        values: "0.02+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mainnet\",chain_id=\"celestia\",source=\"chain\"}"
+        values: "0+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mainnet\",chain_id=\"celestia\",source=\"observer\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mainnet\",chain_id=\"celestia\",source=\"materializer\"}"
+        values: "1+0x20"
+      - series: "fibrestats_provider_registered{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mainnet\",chain_id=\"celestia\",provider=\"1111111111111111111111111111111111111111\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_current_available{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mainnet\",chain_id=\"celestia\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_ready{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mainnet\",chain_id=\"celestia\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\"}"
+        values: "0+0x20"
+    promql_expr_test:
+      - expr: "count(ALERTS{alertname=\"FibreStatsSourceUnavailable\",alertstate=\"firing\"})"
+        eval_time: 20m
+        exp_samples:
+          - labels: "{}"
+            value: 1
+      - expr: "count(ALERTS{alertstate=\"firing\"})"
+        eval_time: 20m
+        exp_samples:
+          - labels: "{}"
+            value: 1
+  - name: "availability gates retain the measurement vantage"
+    interval: 1m
+    input_series:
+      - series: "up{job=\"fibrestats\",instance=\"probe:3000\",alert_provider=\"1111111111111111111111111111111111111111\",alert_network=\"Mocha\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"chain\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"index\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"observer\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"materializer\"}"
+        values: "1+0x20"
+      - series: "fibrestats_provider_registered{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_current_available{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\"}"
+        values: "0+0x20"
+      - series: "fibrestats_probe_ready{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\"}"
+        values: "0+0x20"
+      - series: "fibrestats_probe_duration_seconds{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\",stage=\"tcp\"}"
+        values: "0.02+0x20"
+      - series: "fibrestats_probe_current_available{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-2\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_ready{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-2\"}"
+        values: "1+0x20"
+    promql_expr_test:
+      - expr: "count(ALERTS{alertname=\"FibreStatsProviderObservationUnavailable\",alertstate=\"firing\"})"
+        eval_time: 20m
+        exp_samples:
+          - labels: "{}"
+            value: 1
+      - expr: "count(ALERTS{alertstate=\"firing\"})"
+        eval_time: 20m
+        exp_samples:
+          - labels: "{}"
+            value: 1
+
+  - name: "provider alerts disabled without explicit target labels"
+    interval: 1m
+    input_series:
+      - series: "up{job=\"fibrestats\",instance=\"probe:3000\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"chain\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"index\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"observer\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"materializer\"}"
+        values: "1+0x20"
+      - series: "fibrestats_provider_registered{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_current_available{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_ready{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\"}"
+        values: "0+0x20"
+      - series: "fibrestats_probe_duration_seconds{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\",stage=\"tcp\"}"
+        values: "0.02+0x20"
+      - series: "fibrestats_provider_registered{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"2222222222222222222222222222222222222222\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_current_available{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"2222222222222222222222222222222222222222\",vantage=\"probe-host-1\"}"
+        values: "0+0x20"
+      - series: "fibrestats_provider_registered{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"3333333333333333333333333333333333333333\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_current_available{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"3333333333333333333333333333333333333333\",vantage=\"probe-host-1\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_ready{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"3333333333333333333333333333333333333333\",vantage=\"probe-host-1\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_duration_seconds{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"3333333333333333333333333333333333333333\",vantage=\"probe-host-1\",stage=\"tcp\"}"
+        values: "0.6+0x20"
+    promql_expr_test:
+      - expr: "ALERTS{alertstate=\"firing\"}"
+        eval_time: 20m
+        exp_samples: []
+
+  - name: "provider alerts ignore a different explicitly watched provider"
+    interval: 1m
+    input_series:
+      - series: "up{job=\"fibrestats\",instance=\"probe:3000\",alert_provider=\"4444444444444444444444444444444444444444\",alert_network=\"Mocha\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"chain\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"index\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"observer\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"materializer\"}"
+        values: "1+0x20"
+      - series: "fibrestats_provider_registered{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_current_available{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_ready{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\"}"
+        values: "0+0x20"
+      - series: "fibrestats_probe_duration_seconds{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\",stage=\"tcp\"}"
+        values: "0.02+0x20"
+      - series: "fibrestats_provider_registered{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"2222222222222222222222222222222222222222\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_current_available{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"2222222222222222222222222222222222222222\",vantage=\"probe-host-1\"}"
+        values: "0+0x20"
+      - series: "fibrestats_provider_registered{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"3333333333333333333333333333333333333333\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_current_available{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"3333333333333333333333333333333333333333\",vantage=\"probe-host-1\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_ready{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"3333333333333333333333333333333333333333\",vantage=\"probe-host-1\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_duration_seconds{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"3333333333333333333333333333333333333333\",vantage=\"probe-host-1\",stage=\"tcp\"}"
+        values: "0.6+0x20"
+    promql_expr_test:
+      - expr: "ALERTS{alertstate=\"firing\"}"
+        eval_time: 20m
+        exp_samples: []
+
+  - name: "provider alerts ignore a different explicitly watched network"
+    interval: 1m
+    input_series:
+      - series: "up{job=\"fibrestats\",instance=\"probe:3000\",alert_provider=\"1111111111111111111111111111111111111111\",alert_network=\"Mainnet\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"chain\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"index\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"observer\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"materializer\"}"
+        values: "1+0x20"
+      - series: "fibrestats_provider_registered{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_current_available{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_ready{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\"}"
+        values: "0+0x20"
+      - series: "fibrestats_probe_duration_seconds{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\",stage=\"tcp\"}"
+        values: "0.02+0x20"
+      - series: "fibrestats_provider_registered{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"2222222222222222222222222222222222222222\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_current_available{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"2222222222222222222222222222222222222222\",vantage=\"probe-host-1\"}"
+        values: "0+0x20"
+      - series: "fibrestats_provider_registered{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"3333333333333333333333333333333333333333\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_current_available{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"3333333333333333333333333333333333333333\",vantage=\"probe-host-1\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_ready{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"3333333333333333333333333333333333333333\",vantage=\"probe-host-1\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_duration_seconds{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"3333333333333333333333333333333333333333\",vantage=\"probe-host-1\",stage=\"tcp\"}"
+        values: "0.6+0x20"
+    promql_expr_test:
+      - expr: "ALERTS{alertstate=\"firing\"}"
+        eval_time: 20m
+        exp_samples: []
+
+  - name: "provider alert selection requires canonical lowercase identity"
+    interval: 1m
+    input_series:
+      - series: "up{job=\"fibrestats\",instance=\"probe:3000\",alert_provider=\"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\",alert_network=\"Mocha\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"chain\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"index\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"observer\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"materializer\"}"
+        values: "1+0x20"
+      - series: "fibrestats_provider_registered{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_current_available{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_ready{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\"}"
+        values: "0+0x20"
+      - series: "fibrestats_probe_duration_seconds{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\",stage=\"tcp\"}"
+        values: "0.02+0x20"
+      - series: "fibrestats_provider_registered{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"2222222222222222222222222222222222222222\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_current_available{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"2222222222222222222222222222222222222222\",vantage=\"probe-host-1\"}"
+        values: "0+0x20"
+      - series: "fibrestats_provider_registered{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"3333333333333333333333333333333333333333\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_current_available{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"3333333333333333333333333333333333333333\",vantage=\"probe-host-1\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_ready{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"3333333333333333333333333333333333333333\",vantage=\"probe-host-1\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_duration_seconds{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"3333333333333333333333333333333333333333\",vantage=\"probe-host-1\",stage=\"tcp\"}"
+        values: "0.6+0x20"
+    promql_expr_test:
+      - expr: "ALERTS{alertstate=\"firing\"}"
+        eval_time: 20m
+        exp_samples: []
+
+  - name: "collection alerts remain active without watched-provider labels"
+    interval: 1m
+    input_series:
+      - series: "up{job=\"fibrestats\",instance=\"probe:3000\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"chain\"}"
+        values: "0+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"index\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"observer\"}"
+        values: "1+0x20"
+      - series: "fibrestats_source_healthy{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",source=\"materializer\"}"
+        values: "1+0x20"
+      - series: "fibrestats_provider_registered{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_current_available{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_ready{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\"}"
+        values: "0+0x20"
+      - series: "fibrestats_probe_duration_seconds{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"1111111111111111111111111111111111111111\",vantage=\"probe-host-1\",stage=\"tcp\"}"
+        values: "0.02+0x20"
+      - series: "fibrestats_provider_registered{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"2222222222222222222222222222222222222222\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_current_available{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"2222222222222222222222222222222222222222\",vantage=\"probe-host-1\"}"
+        values: "0+0x20"
+      - series: "fibrestats_provider_registered{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"3333333333333333333333333333333333333333\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_current_available{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"3333333333333333333333333333333333333333\",vantage=\"probe-host-1\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_ready{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"3333333333333333333333333333333333333333\",vantage=\"probe-host-1\"}"
+        values: "1+0x20"
+      - series: "fibrestats_probe_duration_seconds{job=\"fibrestats\",instance=\"probe:3000\",network=\"Mocha\",chain_id=\"mocha-5\",provider=\"3333333333333333333333333333333333333333\",vantage=\"probe-host-1\",stage=\"tcp\"}"
+        values: "0.6+0x20"
+    promql_expr_test:
+      - expr: "count(ALERTS{alertname=\"FibreStatsSourceUnavailable\",alertstate=\"firing\"})"
+        eval_time: 20m
+        exp_samples:
+          - labels: "{}"
+            value: 1
+      - expr: "count(ALERTS{alertstate=\"firing\"})"
+        eval_time: 20m
+        exp_samples:
+          - labels: "{}"
+            value: 1

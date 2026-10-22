@@ -1,0 +1,28 @@
+# Optional private integration with an operator-owned FibreStats Compose stack.
+# Start FibreStats first; its web service and this stack share the external network.
+services:
+  prometheus:
+    volumes:
+      - ./fibrestats/scrape.yml:/etc/prometheus/optional/scrapes/fibrestats.yml:ro
+      - ./fibrestats:/etc/prometheus/fibrestats:ro
+      - ./prometheus/fibrestats_alerts.yml:/etc/prometheus/optional/rules/fibrestats.yml:ro
+    networks:
+      - default
+      - fibrestats
+
+  grafana:
+    environment:
+      GF_PLUGINS_PREINSTALL_SYNC: yesoreyeram-infinity-datasource@4.1.3
+      FIBRESTATS_API_URL: ${FIBRESTATS_API_URL:-http://web:3000}
+    volumes:
+      - ./fibrestats/provisioning/datasources/fibrestats.yml:/etc/grafana/provisioning/datasources/fibrestats.yml:ro
+      - ./fibrestats/provisioning/dashboards/fibrestats.yml:/etc/grafana/provisioning/dashboards/fibrestats.yml:ro
+      - ./fibrestats/dashboards:/var/lib/grafana/fibrestats:ro
+    networks:
+      - default
+      - fibrestats
+
+networks:
+  fibrestats:
+    external: true
+    name: ${FIBRESTATS_DOCKER_NETWORK:-fibrestats_default}
