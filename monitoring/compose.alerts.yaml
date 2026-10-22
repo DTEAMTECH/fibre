@@ -1,0 +1,24 @@
+# Add this file with `-f compose.yaml -f compose.alerts.yaml` to evaluate alerts.
+# Notifications stay local until you configure an Alertmanager receiver.
+services:
+  prometheus:
+    volumes:
+      - ./prometheus/prometheus-alerts.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/fibre_alerts.yml:/etc/prometheus/fibre_alerts.yml:ro
+    depends_on:
+      - alertmanager
+
+  alertmanager:
+    image: prom/alertmanager:v0.33.0
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --storage.path=/alertmanager
+    volumes:
+      - ${ALERTMANAGER_CONFIG:-./alertmanager/alertmanager.yml}:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager-data:/alertmanager
+    ports:
+      - "127.0.0.1:${ALERTMANAGER_PORT:-9093}:9093"
+
+volumes:
+  alertmanager-data:
