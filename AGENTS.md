@@ -29,6 +29,8 @@ Stack guidance: the web app is TypeScript/Next.js — that decision is made. The
 
 ## 3. How the fibre server exposes data (the input contract)
 
+> **Errata (2026-10-21, verified against celestia-app v10.4.0 — full details in `docs/protocol-verification-v10.4.0.md`; where this file conflicts with that doc, trust that doc):** `last_success_timestamp` and the `backend.get.*` family **do** ship in v10.4.0 (only `dupe_hits` and a `store.backend` info gauge are main-only); the official dashboards live at `observability/docker/grafana/dashboards/fibre{,-runtime}.json`, not `fibre/dashboards/`; storage-budget logic must use the exported `budget_bytes` gauge (stake-share math under-reads ≈3× due to the liveness clamp); the OTLP stream also carries `fibre.client.*` and `go.*` runtime series; `is-payment-processed` takes `{promise_hash}`; extra annotation queries exist (`validate-payment-promise`, `fibre-provider-info/{addr}`).
+
 The `fibre` binary ships with celestia-app releases. Observability is **push-only OTLP/HTTP** — there is **no Prometheus scrape endpoint**:
 
 - Enable with: `fibre start --otel-endpoint http://<collector>:4318` (env `FIBRE_OTEL_ENDPOINT`). The binary appends `/v1/traces` and `/v1/metrics` to the base URL. Disabled by default.
