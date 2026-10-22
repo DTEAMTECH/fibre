@@ -35,14 +35,14 @@ You need Docker with the Compose plugin and a running Fibre server. These instru
 Clone the repository and enter the monitoring directory:
 
 ```bash
-git clone https://github.com/DTEAMTECH/fibre.git
-cd fibre/monitoring
+git clone https://github.com/DTEAMTECH/fibre-monitoring.git
+cd fibre-monitoring/monitoring
 docker compose up -d
 ```
 
 Open **http://localhost:3000**. Sign in with `admin` / `admin` and change the password when prompted. The **Fibre Server — Operator** dashboard and **Prometheus** data source are already installed.
 
-For a password of your choice before the first start, create `.env` in the current directory (`fibre/monitoring/`):
+For a password of your choice before the first start, create `.env` in the current directory (`fibre-monitoring/monitoring/`):
 
 ```dotenv
 GRAFANA_ADMIN_PASSWORD=your-long-password
@@ -238,7 +238,7 @@ This removes the optional Alertmanager container and switches Prometheus back to
 
 ## Configuration
 
-All commands below run from `fibre/monitoring/`. Override these defaults in `.env`:
+All commands below run from `fibre-monitoring/monitoring/`. Override these defaults in `.env`:
 
 ```dotenv
 GRAFANA_PORT=3000
@@ -330,4 +330,4 @@ An absent settlement endorsement alone is not a failure: publishers can reach qu
 
 ## Contributing
 
-Changes and operator feedback are welcome through [issues](https://github.com/DTEAMTECH/fibre/issues) and pull requests. Report the Fibre version, network, relevant configuration and reproducible symptoms; keep credentials and private information out of reports.
+Changes and operator feedback are welcome through [issues](https://github.com/DTEAMTECH/fibre-monitoring/issues) and pull requests. Report the Fibre version, network, relevant configuration and reproducible symptoms; keep credentials and private information out of reports.
