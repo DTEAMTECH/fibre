@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/fibre-monitoring.svg" alt="Fibre Monitoring by DTEAMTECH — self-hosted Grafana monitoring for Celestia Fibre" width="100%" />
+  <img src="docs/assets/fibre-monitoring-hero.png" alt="Fibre Monitoring by DTEAMTECH — self-hosted Grafana monitoring for Celestia Fibre" width="100%" />
 </p>
 
 # Celestia Fibre Monitoring
