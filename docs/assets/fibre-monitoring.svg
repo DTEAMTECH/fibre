@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="320" viewBox="0 0 1280 320" role="img" aria-labelledby="title desc">
+  <title id="title">Fibre Monitoring by DTEAMTECH</title>
+  <desc id="desc">Self-hosted Fibre monitoring and traffic exploration with Grafana, Prometheus and OpenTelemetry. Abstract telemetry lines; no Celestia marks.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#0E1014"/><stop offset="1" stop-color="#231860"/></linearGradient>
+    <linearGradient id="line" x1="0" x2="1"><stop stop-color="#5640D1"/><stop offset="1" stop-color="#7C68F2"/></linearGradient>
+    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse"><path d="M48 0H0V48" fill="none" stroke="#C4C8CE" stroke-opacity=".07"/></pattern>
+  </defs>
+  <rect width="1280" height="320" rx="20" fill="url(#bg)"/>
+  <rect width="1280" height="320" rx="20" fill="url(#grid)"/>
+  <rect x="56" y="48" width="4" height="22" rx="2" fill="#7C68F2"/>
+  <text x="76" y="65" fill="#C8C3E5" font-family="Arial, Helvetica, sans-serif" font-size="14" letter-spacing="3">DTEAMTECH / CELESTIA FIBRE</text>
+  <text x="56" y="143" fill="#FDFCFF" font-family="Arial, Helvetica, sans-serif" font-size="56" font-weight="700" letter-spacing="-1">Fibre Monitoring</text>
+  <text x="58" y="186" fill="#C4C8CE" font-family="Arial, Helvetica, sans-serif" font-size="21">Your server. Your traffic. Your infrastructure.</text>
+  <rect x="56" y="230" width="126" height="34" rx="17" fill="#5640D1"/>
+  <text x="119" y="252" text-anchor="middle" fill="#FDFCFF" font-family="Arial, Helvetica, sans-serif" font-size="13">SELF-HOSTED</text>
+  <text x="204" y="252" fill="#C8C3E5" font-family="Arial, Helvetica, sans-serif" font-size="15">Grafana · Prometheus · OpenTelemetry</text>
+  <rect x="830" y="60" width="394" height="204" rx="12" fill="#0E1014" fill-opacity=".55" stroke="#7C68F2" stroke-opacity=".3"/>
+  <text x="854" y="91" fill="#808890" font-family="Arial, Helvetica, sans-serif" font-size="12" letter-spacing="2">OBSERVE · UNDERSTAND · RESPOND</text>
+  <path d="M854 221H1200M854 180H1200M854 139H1200" stroke="#808890" stroke-opacity=".16"/>
+  <path d="M854 213L882 211L904 190L927 201L950 168L972 173L995 125L1018 157L1041 148L1064 174L1087 149L1110 160L1133 126L1156 143L1178 111L1200 119" fill="none" stroke="url(#line)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M854 232L882 224L904 226L927 218L950 228L972 209L995 215L1018 201L1041 209L1064 193L1087 201L1110 181L1133 185L1156 170L1178 177L1200 158" fill="none" stroke="#5595C3" stroke-width="2" stroke-opacity=".85"/>
+</svg>
