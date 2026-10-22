@@ -24,7 +24,7 @@ A self-hosted monitoring bundle by **DTEAMTECH**. Run it with Docker Compose, co
 | **Local control** | Persistent storage, provisioned dashboards, pinned images and private service ports |
 
 > [!NOTE]
-> **Current coverage: internal Fibre telemetry.** The goal is full self-hosted Fibre exploration, including outside-view latency, endorsements and network blob activity. The separate [FibreStats explorer](https://github.com/zeroiwobro/fibrestats) already provides probes and chain ingestion; its Grafana integration and provider endorsement attribution are next. Run it on infrastructure you control. No external data feed is configured here yet.
+> **Current coverage: internal Fibre telemetry.** You need only this monitoring stack and your existing Fibre service. Outside-view reachability, endorsement history and network-wide blob activity need an external data source and are not connected in this bundle.
 
 ## Quick start
 
@@ -147,7 +147,7 @@ An idle network is healthy. Empty request panels before the first request are ex
 - **Latency percentiles:** server handler timing, not internet ping or end-to-end client latency.
 - **In-flight RPCs:** concurrent operations, not total network connections or configured connection capacity.
 
-Successful duplicate uploads count again in upload bytes. Download bytes are recorded before returning the response and do not prove full client receipt. Neither counter includes transport overhead or measures interface bandwidth. Network-wide blob volume will come through the planned FibreStats integration; host bandwidth needs host metrics.
+Successful duplicate uploads count again in upload bytes. Download bytes are recorded before returning the response and do not prove full client receipt. Neither counter includes transport overhead or measures interface bandwidth. Network-wide blob volume needs an external data source; host bandwidth needs host metrics.
 
 Storage occupancy includes limiter reservations. It is separate from physical disk usage. Signing latency measures Fibre payment-promise signing/waiting and has no universal 10 ms threshold. [Exact-tag instruments](https://github.com/celestiaorg/celestia-app/blob/v10.4.0/fibre/server_metrics.go), [upload byte accounting](https://github.com/celestiaorg/celestia-app/blob/v10.4.0/fibre/server_upload.go), [download byte accounting](https://github.com/celestiaorg/celestia-app/blob/v10.4.0/fibre/server_download.go).
 
@@ -318,7 +318,7 @@ Configuration and synthetic pipeline checks have passed. Real Fibre devnet/load 
 
 ## Roadmap
 
-Extend Grafana using an operator-hosted [FibreStats](https://github.com/zeroiwobro/fibrestats) instance for public observations and chain records, alongside local server/host metrics:
+Planned dashboard additions include outside-view observations and chain records from a shared read-only data source, alongside local server/host metrics. Operators should not need to deploy an explorer or blockchain reader:
 
 - **Reachability and latency:** probes on another host/network, with validator identity checks and explicit probe locations.
 - **Endorsement participation:** signature inclusion, historical validator sets, periods and sample counts.
