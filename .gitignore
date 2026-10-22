@@ -1,9 +1,8 @@
-# fibrestats app code is developed locally and intentionally NOT published in this repo
-/fibrestats/
-
-# agent tooling (per Spec Kit installer security notice; restore with `specify init --here --integration kimi`)
+# Local workspace and agent files
+/.context/
 /.kimi-code/
-
-# misc
 .DS_Store
 .env*
+
+# Operator notification credentials stay on the local machine.
+/monitoring/alertmanager/alertmanager.local.yml

@@ -1,149 +1,145 @@
-# Prometheus alerting rules for a single-operator Celestia Fibre server.
+# Optional rules for a local, single-operator Fibre stack.
+# Metric contract: celestia-app v10.4.0. OTLP dots become underscores;
+# seconds/bytes gain unit suffixes and monotonic counters gain _total.
+# Prometheus must scrape the collector with job_name: fibre.
+# Thresholds are starting points for operator tuning, not protocol SLOs.
 #
-# Metric surface: celestia-app v10.4.0 `fibre.server.*` OTLP instruments, as
-# exposed by the OpenTelemetry Collector's Prometheus exporter (see
-# ../otelcol/otelcol.yaml). Conversion rules that produced these names:
-#   - dots become underscores        fibre.server.sign.duration -> fibre_server_sign_duration
-#   - unit suffix appended           unit "s"  -> _seconds,  unit "By" -> _bytes
-#   - monotonic counters get _total  rejected  -> rejected_total
-#   - resource attrs become labels   service.instance.id -> service_instance_id
-#
-# Load from prometheus.yml:
-#   rule_files:
-#     - /etc/prometheus/rules/fibre_alerts.yml
-#
-# `service_instance_id` is the fibre server's hostname (set by the fibre
-# binary itself), so every alert below carries it for multi-server operators.
-
+# Global absence cannot identify one missing server while another reports.
+# Individual alert instances use service_instance_id (the server hostname).
 groups:
-  # ------------------------------------------------------------- availability
-  - name: fibre-server-availability
+  - name: fibre-availability
     rules:
+      - alert: FibreCollectorScrapeFailed
+        expr: up{job="fibre"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Cannot scrape the Fibre collector"
+          description: "Prometheus cannot scrape {{ $labels.instance }}. Check the collector and its metrics endpoint. This checks the monitoring pipeline, not public Fibre reachability."
+
       - alert: FibreServerMetricsMissing
-        # No fibre server series at all in Prometheus. Either every fibre
-        # server stopped pushing, the collector is down, or the scrape broke.
-        expr: absent(fibre_server_upload_shard_in_flight)
+        # Occupancy is reported even before the first upload. Event-driven
+        # in_flight metrics may not exist yet on a healthy idle server.
+        # With metric_expiration: 2m, detection also includes that cache delay.
+        expr: absent(fibre_server_upload_shard_occupancy_bytes)
         for: 5m
         labels:
           severity: critical
         annotations:
           summary: "No Fibre server metrics are arriving"
-          description: "Prometheus has seen no fibre_server_* series for 5 minutes. Check that the fibre server is running with --otel-endpoint, that the OTel Collector is up, and that the collector's :8889 endpoint is being scraped."
-
-      - alert: FibreServerInstanceStoppedReporting
-        # One specific server went silent while others keep reporting.
-        # Matches instances that were present ~10m ago but are absent now.
-        expr: count by (service_instance_id) (fibre_server_upload_shard_in_flight offset 10m) unless count by (service_instance_id) (fibre_server_upload_shard_in_flight)
-        for: 5m
-        labels:
-          severity: critical
-        annotations:
-          summary: "Fibre server {{ $labels.service_instance_id }} stopped reporting"
-          description: "Fibre server {{ $labels.service_instance_id }} was pushing metrics 15 minutes ago but has gone silent. Check the fibre process and its OTLP exporter on that host."
+          description: "No server occupancy gauge is available for 5 minutes. Check Fibre's --otel-endpoint, the collector, and its Prometheus scrape. This is a whole-stack check; it cannot detect one missing server while another still reports."
 
       - alert: FibreUploadSuccessStale
-        # The server is alive (in-flight gauge present) but has not completed
-        # a successful upload for over 5 minutes. Note: the
-        # last_success_timestamp gauge is only emitted after the first
-        # successful upload, so a brand-new server with no uploads yet does
-        # not fire this alert.
-        expr: (time() - fibre_server_upload_shard_last_success_timestamp_seconds > 300) and on(service_instance_id) (count by (service_instance_id) (fibre_server_upload_shard_in_flight))
+        # The gauge is absent until the first successful RPC. Require this
+        # server's completed upload attempts; an idle network is healthy.
+        # The failure-rate rule below also covers a server with no successes.
+        expr: |
+          (time() - fibre_server_upload_shard_last_success_timestamp_seconds > 300)
+          and on (service_instance_id)
+          (sum by (service_instance_id) (increase(fibre_server_upload_shard_duration_seconds_count[5m])) > 0)
         for: 5m
         labels:
           severity: warning
         annotations:
-          summary: "No successful Fibre upload on {{ $labels.service_instance_id }} for 5m"
-          description: "Fibre server {{ $labels.service_instance_id }} is reporting but has not completed a successful UploadShard RPC for more than 5 minutes (last success {{ $value | humanizeDuration }} ago). During active network upload windows this means the server has stopped accepting or storing shards."
+          summary: "Fibre uploads are arriving without successful completion"
+          description: "{{ $labels.service_instance_id }} has continued completing upload attempts but has had no successful upload for over 5 minutes. Check upload errors, budget, storage, and signing. This is not an endorsement participation rate."
 
-  # ------------------------------------------------------------------ storage
-  - name: fibre-server-storage
+  - name: fibre-storage
     rules:
       - alert: FibreStorageBudgetHigh
-        # occupancy_bytes is the limiter-tracked total (on-disk + in-flight
-        # reserved); budget_bytes is the per-node budget exported by the
-        # server itself. Use these gauges rather than estimating the budget
-        # from stake share, which under-reads by ~3x (liveness-inverse scaling).
-        expr: fibre_server_upload_shard_occupancy_bytes / fibre_server_upload_shard_budget_bytes > 0.8
+        # Limiter occupancy includes stored bytes and in-flight reservations;
+        # it is not filesystem usage. Use the exported budget, not stake math.
+        # A non-positive budget disables enforcement, so exclude it.
+        expr: |
+          (fibre_server_upload_shard_occupancy_bytes / fibre_server_upload_shard_budget_bytes > 0.8)
+          and (fibre_server_upload_shard_budget_bytes > 0)
         for: 15m
         labels:
           severity: warning
         annotations:
           summary: "Fibre storage budget above 80% on {{ $labels.service_instance_id }}"
-          description: "Fibre server {{ $labels.service_instance_id }} is using {{ $value | humanizePercentage }} of its per-node storage budget for over 15 minutes. Once full, new uploads are rejected with reason=budget_exceeded until shards prune."
+          description: "Limiter occupancy is {{ $value | humanizePercentage }} of the exported storage budget. At the limit, new shard storage is rejected until capacity is released. Check physical disk space separately."
 
       - alert: FibreStorageBudgetCritical
-        expr: fibre_server_upload_shard_occupancy_bytes / fibre_server_upload_shard_budget_bytes > 0.95
+        expr: |
+          (fibre_server_upload_shard_occupancy_bytes / fibre_server_upload_shard_budget_bytes > 0.95)
+          and (fibre_server_upload_shard_budget_bytes > 0)
         for: 5m
         labels:
           severity: critical
         annotations:
           summary: "Fibre storage budget above 95% on {{ $labels.service_instance_id }}"
-          description: "Fibre server {{ $labels.service_instance_id }} is using {{ $value | humanizePercentage }} of its per-node storage budget. Upload rejections are imminent or already happening."
+          description: "Limiter occupancy is {{ $value | humanizePercentage }} of the exported storage budget. New uploads may be rejected. Check budget rejections and prune failures."
 
       - alert: FibreUploadsRejectedBudgetExceeded
-        # At celestia-app v10.4.0, budget_exceeded is the only rejection
-        # reason the server emits. Any rejection means a client's upload
-        # failed against your server (it gets a RetryInfo hint of one prune
-        # interval and will retry).
         expr: increase(fibre_server_upload_shard_rejected_total{reason="budget_exceeded"}[15m]) > 0
         labels:
           severity: warning
         annotations:
-          summary: "Fibre uploads rejected (budget_exceeded) on {{ $labels.service_instance_id }}"
-          description: "Fibre server {{ $labels.service_instance_id }} rejected {{ $value | humanize }} upload(s) in the last 15 minutes because its storage budget is full. Rejections stop after shards prune (every minute, at max(ExpiresAt, creation + shard_retention))."
+          summary: "Fibre uploads rejected for storage budget"
+          description: "{{ $labels.service_instance_id }} has rejected uploads because its storage budget is full. Clients may retry; a successful prune releases capacity only when eligible shards exist."
 
-      - alert: FibrePruneStalled
-        # The prune loop runs every minute; prune_entries only increments
-        # when a cycle actually deletes shards. Zero deletions for 1h while
-        # the limiter still tracks occupied bytes suggests prune lag.
-        # Can false-positive when all stored shards are younger than
-        # shard_retention (default 4h), e.g. a freshly filled server.
-        expr: (increase(fibre_server_prune_entries_total[1h]) == 0) and on(service_instance_id) (fibre_server_upload_shard_occupancy_bytes > 0)
-        for: 15m
+      - alert: FibrePruneFailures
+        # A cycle records duration even when nothing is eligible for deletion.
+        # No deletions alone cannot prove lag: the retention floor is 4h by
+        # default, and this metric surface has no oldest-expired-shard gauge.
+        expr: sum by (service_instance_id) (increase(fibre_server_prune_duration_seconds_count{success="false"}[15m])) >= 3
         labels:
           severity: warning
         annotations:
-          summary: "Fibre prune loop stalled on {{ $labels.service_instance_id }}"
-          description: "Fibre server {{ $labels.service_instance_id }} holds occupied shard bytes but has pruned nothing for over an hour. If stored shards are older than shard_retention (default 4h), check prune duration/failure metrics and server logs."
+          summary: "Fibre prune cycles are failing"
+          description: "{{ $labels.service_instance_id }} has recorded at least 3 failed prune cycles in 15 minutes. Check store and payload deletion errors in the Fibre logs. Zero deletions on their own are normal when no shards are eligible."
 
       - alert: FibreBackendGetErrors
-        # Outcome enum: success | not_found | timeout | canceled | throttled
-        # | error. not_found/canceled are usually benign; outcome="error"
-        # signals real backend trouble (disk or object storage).
-        expr: rate(fibre_server_backend_get_duration_seconds_count{outcome="error"}[15m]) > 0
+        # Missing blobs and client cancellations are not necessarily faults.
+        expr: sum by (service_instance_id, backend) (increase(fibre_server_backend_get_duration_seconds_count{outcome=~"error|timeout|throttled"}[15m])) >= 3
+        labels:
+          severity: warning
+        annotations:
+          summary: "Fibre storage backend reads are failing"
+          description: "{{ $labels.service_instance_id }} has at least 3 failed, timed out, or throttled reads from its {{ $labels.backend }} backend in 15 minutes. Check local storage or the object-store service."
+
+  - name: fibre-requests
+    rules:
+      - alert: FibreUploadFailureRateHigh
+        # Aggregate upload_size before dividing. Require 20 completed RPCs
+        # so a few requests on a quiet network do not create noisy ratios.
+        expr: |
+          (sum by (service_instance_id) (increase(fibre_server_upload_shard_duration_seconds_count{success="false"}[15m]))
+          / sum by (service_instance_id) (increase(fibre_server_upload_shard_duration_seconds_count[15m])) > 0.1)
+          and on (service_instance_id)
+          (sum by (service_instance_id) (increase(fibre_server_upload_shard_duration_seconds_count[15m])) >= 20)
         for: 5m
         labels:
           severity: warning
         annotations:
-          summary: "Fibre backend get errors on {{ $labels.service_instance_id }}"
-          description: "Fibre server {{ $labels.service_instance_id }} is returning backend ({{ $labels.backend }}) read errors at {{ $value | humanize }}/s. DownloadShard RPCs that hit these reads will fail for clients."
+          summary: "Fibre upload failure rate above 10%"
+          description: "{{ $labels.service_instance_id }} failed {{ $value | humanizePercentage }} of completed upload RPCs over 15 minutes (at least 20 requests). Inspect budget rejections and server logs; failed RPCs may also come from invalid requests or client cancellation."
 
-  # ------------------------------------------------------------------ signing
-  - name: fibre-server-signing
-    rules:
-      - alert: FibreSignLatencyHigh
-        # SLO: median payment-promise signing latency <= 10 ms. 0.01 s is an
-        # explicit histogram bucket boundary, so this fires when the median
-        # lands in a bucket above 10 ms. Slow signing usually means the
-        # signer gRPC link (or remote KMS) is unhealthy.
-        expr: histogram_quantile(0.5, sum by (le, service_instance_id) (rate(fibre_server_sign_duration_seconds_bucket[5m]))) > 0.01
-        for: 15m
+      - alert: FibreDownloadFailureRateHigh
+        expr: |
+          (sum by (service_instance_id) (increase(fibre_server_download_shard_duration_seconds_count{success="false"}[15m]))
+          / sum by (service_instance_id) (increase(fibre_server_download_shard_duration_seconds_count[15m])) > 0.1)
+          and on (service_instance_id)
+          (sum by (service_instance_id) (increase(fibre_server_download_shard_duration_seconds_count[15m])) >= 20)
+        for: 5m
         labels:
           severity: warning
         annotations:
-          summary: "Fibre signing p50 above 10 ms on {{ $labels.service_instance_id }}"
-          description: "Median payment-promise signing latency on {{ $labels.service_instance_id }} has been above 10 ms for 15 minutes (now {{ $value | humanizeDuration }}). Check the signer gRPC connection (default 127.0.0.1:26669, or remote mTLS) and KMS latency."
+          summary: "Fibre download failure rate above 10%"
+          description: "{{ $labels.service_instance_id }} failed {{ $value | humanizePercentage }} of completed download RPCs over 15 minutes (at least 20 requests). Check storage and server logs; requests for missing or expired blobs can also fail."
 
-  # -------------------------------------------------------------- meta/health
-  - name: fibre-meta
-    rules:
-      - alert: Watchdog
-        # Always firing. Route this to a dead-man switch (e.g. an external
-        # health check endpoint); when it stops arriving, the
-        # Prometheus -> Alertmanager pipeline itself is broken.
-        expr: vector(1)
+      - alert: FibreSigningFailures
+        expr: sum by (service_instance_id) (increase(fibre_server_sign_duration_seconds_count{success="false"}[15m])) >= 3
         labels:
-          severity: none
+          severity: warning
         annotations:
-          summary: "Watchdog — always firing"
-          description: "This alert exists to prove the alerting pipeline is alive. If it ever goes silent, alert delivery is broken, not healthy."
+          summary: "Fibre payment-promise signing is failing"
+          description: "{{ $labels.service_instance_id }} has recorded at least 3 signing failures in 15 minutes. Check its signer gRPC connection and the consensus node logs."
+
+# There is no 10 ms SLO for fibre.server.sign.duration: it includes the
+# payment-promise endorsement request. The separate consensus-node metric
+# cometbft_privval_signing_latency_* is the signal behind that requirement.
+# Keep latency panels for diagnosis; choose an alert threshold from your own
+# observed workloads and the client/server locations rather than network ping.

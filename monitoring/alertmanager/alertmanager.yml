@@ -1,0 +1,12 @@
+# Alerts are visible locally in Prometheus and Alertmanager.
+# Add telegram_configs, discord_configs, webhook_configs, or another supported
+# receiver here to enable notifications. No messages are sent by default.
+route:
+  receiver: local-only
+  group_by: [alertname, service_instance_id]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+
+receivers:
+  - name: local-only

@@ -1,0 +1,272 @@
+# Run from monitoring/prometheus:
+# docker run --rm --entrypoint promtool -v "$PWD:/work:ro" -w /work \
+#   prom/prometheus:v3.5.4 test rules tests.yml
+rule_files:
+  - fibre_alerts.yml
+evaluation_interval: 1m
+
+tests:
+  - name: healthy idle server before first upload has no alerts
+    interval: 1m
+    input_series:
+      - series: 'fibre_server_upload_shard_occupancy_bytes{service_instance_id="test"}'
+        values: '0+0x30'
+      - series: 'fibre_server_upload_shard_budget_bytes{service_instance_id="test"}'
+        values: '1000+0x30'
+      - series: 'fibre_server_prune_duration_seconds_count{service_instance_id="test",success="true"}'
+        values: '0+1x30'
+    promql_expr_test:
+      - expr: count(ALERTS{alertstate="firing"}) or vector(0)
+        eval_time: 20m
+        exp_samples:
+          - labels: '{}'
+            value: 0
+
+  - name: healthy recent shards need not prune even with high occupancy
+    interval: 1m
+    input_series:
+      - series: 'fibre_server_upload_shard_occupancy_bytes{service_instance_id="test"}'
+        values: '850+0x30'
+      - series: 'fibre_server_upload_shard_budget_bytes{service_instance_id="test"}'
+        values: '1000+0x30'
+      - series: 'fibre_server_prune_duration_seconds_count{service_instance_id="test",success="true"}'
+        values: '0+1x30'
+      - series: 'fibre_server_prune_entries_total{service_instance_id="test"}'
+        values: '0+0x30'
+    promql_expr_test:
+      - expr: count(ALERTS{alertstate="firing"})
+        eval_time: 20m
+        exp_samples:
+          - labels: '{}'
+            value: 1
+      - expr: count(ALERTS{alertname="FibreStorageBudgetHigh",alertstate="firing"})
+        eval_time: 20m
+        exp_samples:
+          - labels: '{}'
+            value: 1
+
+  - name: old last success with no new upload attempts is healthy idle
+    interval: 1m
+    input_series:
+      - series: 'fibre_server_upload_shard_occupancy_bytes{service_instance_id="test"}'
+        values: '100+0x30'
+      - series: 'fibre_server_upload_shard_last_success_timestamp_seconds{service_instance_id="test"}'
+        values: '1+0x30'
+      - series: 'fibre_server_upload_shard_duration_seconds_count{service_instance_id="test",success="true"}'
+        values: '100+0x30'
+      - series: 'fibre_server_download_shard_duration_seconds_count{service_instance_id="test",success="true"}'
+        values: '0+10x30'
+    promql_expr_test:
+      - expr: count(ALERTS{alertstate="firing"}) or vector(0)
+        eval_time: 20m
+        exp_samples:
+          - labels: '{}'
+            value: 0
+
+  - name: disabled budget does not divide by zero into a capacity alert
+    interval: 1m
+    input_series:
+      - series: 'fibre_server_upload_shard_occupancy_bytes{service_instance_id="test"}'
+        values: '1000+0x30'
+      - series: 'fibre_server_upload_shard_budget_bytes{service_instance_id="test"}'
+        values: '0+0x30'
+    promql_expr_test:
+      - expr: count(ALERTS{alertstate="firing"}) or vector(0)
+        eval_time: 20m
+        exp_samples:
+          - labels: '{}'
+            value: 0
+
+  - name: missing all Fibre telemetry alerts after the grace period
+    interval: 1m
+    input_series: []
+    promql_expr_test:
+      - expr: count(ALERTS{alertstate="firing"}) or vector(0)
+        eval_time: 4m
+        exp_samples:
+          - labels: '{}'
+            value: 0
+      - expr: count(ALERTS{alertname="FibreServerMetricsMissing",alertstate="firing"})
+        eval_time: 5m
+        exp_samples:
+          - labels: '{}'
+            value: 1
+
+  - name: high failure ratio below minimum activity stays quiet
+    interval: 1m
+    input_series:
+      - series: 'fibre_server_upload_shard_occupancy_bytes{service_instance_id="test"}'
+        values: '100+0x30'
+      - series: 'fibre_server_upload_shard_duration_seconds_count{service_instance_id="test",success="false"}'
+        values: '0+1x30'
+      - series: 'fibre_server_download_shard_duration_seconds_count{service_instance_id="test",success="false"}'
+        values: '0+1x30'
+    promql_expr_test:
+      - expr: count(ALERTS{alertstate="firing"}) or vector(0)
+        eval_time: 20m
+        exp_samples:
+          - labels: '{}'
+            value: 0
+
+  - name: all failing uploads alert even before any first success
+    interval: 1m
+    input_series:
+      - series: 'fibre_server_upload_shard_occupancy_bytes{service_instance_id="test"}'
+        values: '100+0x30'
+      - series: 'fibre_server_upload_shard_duration_seconds_count{service_instance_id="test",success="false",upload_size="262144"}'
+        values: '0+2x30'
+    promql_expr_test:
+      - expr: count(ALERTS{alertstate="firing"})
+        eval_time: 20m
+        exp_samples:
+          - labels: '{}'
+            value: 1
+      - expr: count(ALERTS{alertname="FibreUploadFailureRateHigh",alertstate="firing"})
+        eval_time: 20m
+        exp_samples:
+          - labels: '{}'
+            value: 1
+
+  - name: stale upload success requires the same server to have new attempts
+    interval: 1m
+    input_series:
+      - series: 'fibre_server_upload_shard_occupancy_bytes{service_instance_id="test"}'
+        values: '100+0x30'
+      - series: 'fibre_server_upload_shard_last_success_timestamp_seconds{service_instance_id="test"}'
+        values: '1+0x30'
+      - series: 'fibre_server_upload_shard_duration_seconds_count{service_instance_id="test",success="false"}'
+        values: '0+2x30'
+      - series: 'fibre_server_upload_shard_last_success_timestamp_seconds{service_instance_id="idle"}'
+        values: '1+0x30'
+    promql_expr_test:
+      - expr: count(ALERTS{alertstate="firing"})
+        eval_time: 20m
+        exp_samples:
+          - labels: '{}'
+            value: 2
+      - expr: ALERTS{alertname="FibreUploadSuccessStale",alertstate="firing"}
+        eval_time: 20m
+        exp_samples:
+          - labels: 'ALERTS{alertname="FibreUploadSuccessStale",alertstate="firing",service_instance_id="test",severity="warning"}'
+            value: 1
+
+  - name: repeated failed prune cycles alert without requiring deleted entries
+    interval: 1m
+    input_series:
+      - series: 'fibre_server_upload_shard_occupancy_bytes{service_instance_id="test"}'
+        values: '100+0x30'
+      - series: 'fibre_server_prune_duration_seconds_count{service_instance_id="test",success="false"}'
+        values: '0+1x30'
+    promql_expr_test:
+      - expr: count(ALERTS{alertstate="firing"})
+        eval_time: 20m
+        exp_samples:
+          - labels: '{}'
+            value: 1
+      - expr: count(ALERTS{alertname="FibrePruneFailures",alertstate="firing"})
+        eval_time: 20m
+        exp_samples:
+          - labels: '{}'
+            value: 1
+
+  - name: missing and canceled backend reads alone stay quiet
+    interval: 1m
+    input_series:
+      - series: 'fibre_server_upload_shard_occupancy_bytes{service_instance_id="test"}'
+        values: '100+0x30'
+      - series: 'fibre_server_backend_get_duration_seconds_count{service_instance_id="test",backend="local",outcome="not_found"}'
+        values: '0+10x30'
+      - series: 'fibre_server_backend_get_duration_seconds_count{service_instance_id="test",backend="local",outcome="canceled"}'
+        values: '0+10x30'
+    promql_expr_test:
+      - expr: count(ALERTS{alertstate="firing"}) or vector(0)
+        eval_time: 20m
+        exp_samples:
+          - labels: '{}'
+            value: 0
+
+  - name: failed backend reads and signing requests alert
+    interval: 1m
+    input_series:
+      - series: 'fibre_server_upload_shard_occupancy_bytes{service_instance_id="test"}'
+        values: '100+0x30'
+      - series: 'fibre_server_backend_get_duration_seconds_count{service_instance_id="test",backend="object",outcome="timeout"}'
+        values: '0+1x30'
+      - series: 'fibre_server_sign_duration_seconds_count{service_instance_id="test",success="false"}'
+        values: '0+1x30'
+    promql_expr_test:
+      - expr: count(ALERTS{alertstate="firing"})
+        eval_time: 20m
+        exp_samples:
+          - labels: '{}'
+            value: 2
+      - expr: count(ALERTS{alertname=~"FibreBackendGetErrors|FibreSigningFailures",alertstate="firing"})
+        eval_time: 20m
+        exp_samples:
+          - labels: '{}'
+            value: 2
+
+  - name: upload and download failures aggregate differing size attributes
+    interval: 1m
+    input_series:
+      - series: 'fibre_server_upload_shard_occupancy_bytes{service_instance_id="test"}'
+        values: '100+0x30'
+      - series: 'fibre_server_upload_shard_duration_seconds_count{service_instance_id="test",success="false",upload_size="262144"}'
+        values: '0+2x30'
+      - series: 'fibre_server_upload_shard_duration_seconds_count{service_instance_id="test",success="true",upload_size="1048576"}'
+        values: '0+8x30'
+      - series: 'fibre_server_download_shard_duration_seconds_count{service_instance_id="test",success="false",shard_size="16384"}'
+        values: '0+2x30'
+      - series: 'fibre_server_download_shard_duration_seconds_count{service_instance_id="test",success="true",shard_size="65536"}'
+        values: '0+8x30'
+    promql_expr_test:
+      - expr: count(ALERTS{alertstate="firing"})
+        eval_time: 20m
+        exp_samples:
+          - labels: '{}'
+            value: 2
+      - expr: count(ALERTS{alertname=~"FibreUploadFailureRateHigh|FibreDownloadFailureRateHigh",alertstate="firing"})
+        eval_time: 20m
+        exp_samples:
+          - labels: '{}'
+            value: 2
+
+  - name: collector scrape failure is separate from public reachability
+    interval: 1m
+    input_series:
+      - series: 'fibre_server_upload_shard_occupancy_bytes{service_instance_id="test"}'
+        values: '100+0x30'
+      - series: 'up{job="fibre",instance="collector:8889"}'
+        values: '0+0x30'
+    promql_expr_test:
+      - expr: count(ALERTS{alertname="FibreCollectorScrapeFailed",alertstate="firing"}) or vector(0)
+        eval_time: 1m
+        exp_samples:
+          - labels: '{}'
+            value: 0
+      - expr: count(ALERTS{alertname="FibreCollectorScrapeFailed",alertstate="firing"})
+        eval_time: 2m
+        exp_samples:
+          - labels: '{}'
+            value: 1
+
+  - name: exhausted storage and rejected uploads alert
+    interval: 1m
+    input_series:
+      - series: 'fibre_server_upload_shard_occupancy_bytes{service_instance_id="test"}'
+        values: '960+0x30'
+      - series: 'fibre_server_upload_shard_budget_bytes{service_instance_id="test"}'
+        values: '1000+0x30'
+      - series: 'fibre_server_upload_shard_rejected_total{service_instance_id="test",reason="budget_exceeded"}'
+        values: '0+1x30'
+    promql_expr_test:
+      - expr: count(ALERTS{alertstate="firing"})
+        eval_time: 20m
+        exp_samples:
+          - labels: '{}'
+            value: 3
+      - expr: count(ALERTS{alertname=~"FibreStorageBudgetHigh|FibreStorageBudgetCritical|FibreUploadsRejectedBudgetExceeded",alertstate="firing"})
+        eval_time: 20m
+        exp_samples:
+          - labels: '{}'
+            value: 3
